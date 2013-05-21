@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.10.2)
 project(OGL_OCL_Interop)
 set(target OGLInteropOCL)
 
@@ -14,7 +14,7 @@ find_package(GLUT REQUIRED)
 include(${CMAKE_MODULE_PATH}/helper.cmake)
 
 set(sources
-	src/gltest.cpp
+	src/gpuwaves.cpp
 )
 
 set(kernels

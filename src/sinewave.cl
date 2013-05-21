@@ -16,8 +16,5 @@ __kernel void sinewave(__global float4* pos, unsigned int width,
   
   // write output vertex
   pos[y*width+x] = (float4)(u, w, v, 1.0f);
-  color[y*width+x] = (uchar4) (
-                            (uchar) 255.f *0.5f*(1.f+sin(w+x)),
-                            (uchar) 255.f *0.5f*(1.f+sin((float)x)*cos((float)y)),
-                            (uchar) 255.f *0.5f*(1.f+sin(w+time/10.f)), 0 );
+  color[y*width+x] = (uchar4) (0, 0, 0, 255);
 }

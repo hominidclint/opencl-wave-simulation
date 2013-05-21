@@ -28,6 +28,8 @@ set(sources
 	src/CpuWaves.cpp
 	src/GpuWaves.h
 	src/GpuWaves.cpp
+	src/ExampleApp.h
+	src/ExampleApp.cpp
 )
 
 set(kernels

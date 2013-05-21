@@ -42,12 +42,17 @@ void GlutApp::onResize()
 
 }
 
-void GlutApp::onMouseEvent()
+void GlutApp::onMouseEvent(int button, int state, int x, int y)
 {
 
 }
 
-void GlutApp::onKeyboardEvent()
+void GlutApp::onKeyboardEvent(unsigned char key, int x, int y)
+{
+
+}
+
+void GlutApp::onMotionEvent(int x, int y)
 {
 
 }

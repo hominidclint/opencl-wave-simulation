@@ -23,8 +23,9 @@ public:
     virtual void updateScene(float dt) = 0;
     virtual void drawScene() = 0;
 
-    virtual void onMouseEvent();
-    virtual void onKeyboardEvent();
+    virtual void onMouseEvent(int button, int state, int x, int y);
+    virtual void onKeyboardEvent(unsigned char key, int x, int y);
+    virtual void onMotionEvent(int x, int y);
 
 protected:
     void initGlut(int argc, char** argv);

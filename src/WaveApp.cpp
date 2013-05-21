@@ -2,26 +2,25 @@
 
 extern GlutApp* g_app;
 
-extern "C" void display()
+extern "C" static void display()
 {
     g_app->drawScene();
 }
 
-extern "C" void keyboard(unsigned char key, int x, int y)
+extern "C" static void keyboard(unsigned char key, int x, int y)
 {
-    g_app->onKeyboardEvent(); // #TODO
+    g_app->onKeyboardEvent(key, x, y);
 }
 
-extern "C" void mouse(int button, int state, int x, int y)
+extern "C" static void mouse(int button, int state, int x, int y)
 {
-    g_app->onMouseEvent(); // #TODO
+    g_app->onMouseEvent(button, state, x, y);
 }
 
-extern "C" void motion(int x, int y)
+extern "C" static void motion(int x, int y)
 {
-    g_app->onMouseEvent(); // #TODO
+    g_app->onMotionEvent(x, y);
 }
-
 WaveApp::WaveApp(int argc, char** argv, int width, int height)
     : GlutApp(argc, argv, width, height)
 {

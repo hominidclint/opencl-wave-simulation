@@ -1,24 +1,15 @@
 #include <iostream>
-#include "WaveApp.h"
-
-// callback prototypes
-static void release();
+#include "ExampleApp.h"
 
 GlutApp* g_app;
 
 int main(int argc, char** argv)
 {
-    WaveApp app(argc, argv, 800, 600);
+    ExampleApp app(argc, argv, 800, 600, 128, 128);
     if(!app.init())
     {
         return 0;
     }
-    atexit(release);
 
     return app.run();
-}
-
-static void release()
-{
-    delete g_app;
 }

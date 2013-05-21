@@ -1,0 +1,11 @@
+build/*
+build_debug/*
+install/*
+data/*
+docs/*
+*.lib
+*.dll
+*.so
+*.exe
+*.a
+*.o

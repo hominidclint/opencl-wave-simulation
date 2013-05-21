@@ -14,11 +14,24 @@ find_package(GLUT REQUIRED)
 include(${CMAKE_MODULE_PATH}/helper.cmake)
 
 set(sources
-	src/gpuwaves.cpp
+	src/main.cpp
+	#src/gpu_waves.cpp
+	src/GlutApp.h
+	src/GlutApp.cpp
+	src/WaveApp.h
+	src/WaveApp.cpp
+	src/GridGenerator.h
+	src/GridGenerator.cpp
+	src/MathUtils.h
+	src/MathUtils.cpp
+	src/CpuWaves.h
+	src/CpuWaves.cpp
+	src/GpuWaves.h
+	src/GpuWaves.cpp
 )
 
 set(kernels
-	src/sinewave.cl
+	src/fxWaves.cl
 )
 
 set(all_sources

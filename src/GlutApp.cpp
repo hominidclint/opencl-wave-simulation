@@ -19,7 +19,7 @@ void GlutApp::initGlut(int argc, char** argv)
     glutInitWindowPosition(glutGet(GLUT_SCREEN_WIDTH)/2 - m_width/2,
                            glutGet(GLUT_SCREEN_HEIGHT)/2 - m_height/2);
     glutInitWindowSize(m_width, m_height);
-    glutCreateWindow("Simple Wave Simulation for Software Profiling Seminar");
+    glutCreateWindow("");
 }
 
 float GlutApp::aspectRatio()

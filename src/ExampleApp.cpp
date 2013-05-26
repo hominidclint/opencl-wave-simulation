@@ -252,13 +252,13 @@ void ExampleApp::onKeyboardEvent(unsigned char key, int x, int y)
 void ExampleApp::onMotionEvent(int x, int y)
 {
     float dx, dy;
-    dx = x - m_prevX;
-    dy = y - m_prevY;
+    dx = static_cast<float>(x - m_prevX);
+    dy = static_cast<float>(y - m_prevY);
 
     if(m_mouseBitMask & 1)
     {
-        m_rotateX += dy * 0.2;
-        m_rotateY += dx * 0.2;
+        m_rotateX += dy * 0.2f;
+        m_rotateY += dx * 0.2f;
     }
     else if(m_mouseBitMask & 4)
     {

@@ -30,6 +30,8 @@ set(sources
 	src/GpuWaves.cpp
 	src/ExampleApp.h
 	src/ExampleApp.cpp
+	src/GLSLProgram.h
+	src/GLSLProgram.cpp
 )
 
 set(kernels

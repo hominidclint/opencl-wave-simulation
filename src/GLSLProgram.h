@@ -21,49 +21,64 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef GLUT_APP_H
-#define GLUT_APP_H
 
-// ogl includes
+#ifndef GLSLPROGRAM_H
+#define GLSLPROGRAM_H
+
 #include <GL/glew.h>
-#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include <string>
 
-#ifndef _WIN32
-#   include <GL/glxew.h>
-#endif
+#include <glm/glm.hpp>
 
-class GlutApp
+namespace GLSLShader
 {
-public:
-    GlutApp(int argc, char** argv, int width, int height);
-    ~GlutApp();
-
-    float aspectRatio();
-    int run();
-    std::string queryVersionInformations() const;
-    std::string queryExtensionInformations() const;
-
-    /************************************************************************/
-    /* return 1 if error, else 0                                            */
-    /************************************************************************/
-    int checkGLError(const char* file, int line);
-
-    virtual bool init();
-    virtual void onResize();
-    virtual void updateScene(float dt) = 0;
-    virtual void drawScene() = 0;
-
-    virtual void onMouseEvent(int button, int state, int x, int y);
-    virtual void onKeyboardEvent(unsigned char key, int x, int y);
-    virtual void onMotionEvent(int x, int y);
-
-protected:
-    void initGlut(int argc, char** argv);
-
-    int m_width;
-    int m_height;
+    enum GLSLShaderType
+    {
+        VERTEX, FRAGMENT, GEOMETRY,
+        TESS_CONTROL, TESS_EVALUATION
+    };
 };
 
-#endif // GLUT_APP_H
+class GLSLProgram
+{
+public:
+    GLSLProgram();
+
+    bool compileShaderFromFile(const char* fileName, GLSLShader::GLSLShaderType type);
+    bool compileShaderFromString(const std::string& source, GLSLShader::GLSLShaderType type);
+    bool link();
+    void use();
+
+    std::string log();
+
+    int getHandle();
+    bool isLinked();
+
+    // should be called before linking the program
+    void bindAttribLocation(GLuint location, const char* name);
+    void bindFragDataLocation(GLuint location, const char* name);
+
+    void setUniform(const char* name, float x, float y, float z);
+    void setUniform(const char* name, const glm::vec3& v);
+    void setUniform(const char* name, const glm::vec4& v);
+    void setUniform(const char* name, const glm::mat4& m);
+    void setUniform(const char* name, const glm::mat3& m);
+    void setUniform(const char* name, float val);
+    void setUniform(const char* name, int val);
+    void setUniform(const char* name, bool val);
+
+    void printActiveUniforms();
+    void printActiveAttribs();
+
+private:
+    int  m_handle;
+    bool m_linked;
+    std::string m_logString;
+
+    int getUniformLocation(const char* name);
+    bool fileExists(const std::string& fileName);
+};
+
+#endif // GLSLPROGRAM_H

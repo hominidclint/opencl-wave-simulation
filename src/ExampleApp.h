@@ -31,9 +31,21 @@
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 
+// glm
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform2.hpp>
+
 class ExampleApp : public GlutApp
 {
 public:
+    struct Vertex // for interleaved arrays
+    {
+        glm::vec3 position; // strided offset 0
+        glm::vec3 normal; // strided offset 12 (3 * 4)
+        glm::vec2 uv; // strided offset 24 (6 * 4)
+    };
+
     ExampleApp(int argc, char** argv, int width, int height, unsigned int meshWidth, unsigned int meshHeight);
     ~ExampleApp();
 

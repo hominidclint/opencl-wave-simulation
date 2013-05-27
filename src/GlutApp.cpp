@@ -97,6 +97,21 @@ std::string GlutApp::queryExtensionInformations() const
     return sstream.str();
 }
 
+int GlutApp::checkGLError(const char* file, int line)
+{
+    GLenum glError;
+    int returnValue = 0;
+
+    glError = glGetError();
+    while(glError != GL_NO_ERROR)
+    {
+        printf("glError in file %s @ line %d: %s\n", file, line, gluErrorString(glError));
+        returnValue = 1;
+        glError = glGetError();
+    }
+    return returnValue;
+}
+
 void GlutApp::onResize()
 {
 

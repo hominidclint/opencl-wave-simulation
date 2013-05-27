@@ -29,7 +29,7 @@ GlutApp* g_app;
 
 int main(int argc, char** argv)
 {
-    ExampleApp app(argc, argv, 800, 600, 128, 128);
+    ExampleApp app(argc, argv, 800, 600, 512, 512);
     if(!app.init())
     {
         return 0;

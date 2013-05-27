@@ -25,10 +25,8 @@
 #include <iostream>
 #include <fstream>
 
-// glm TEST TODO
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform2.hpp>
+#include "GLSLProgram.h"
+using namespace GLSLShader;
 
 extern GlutApp* g_app;
 
@@ -247,6 +245,36 @@ void ExampleApp::updateScene(float dt)
     model = glm::rotate(model, 90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 mv = view * model;
     glm::vec4 transformed = mv * position;
+
+    // #todo glsl test
+    GLSLProgram program;
+    if(!program.compileShaderFromFile("test.vert", GLSLShaderType::VERTEX))
+    {
+        std::cerr << "Vertex shader failed to compile\n";
+        std::cerr << "Build Log: " << program.log() << std::endl;
+        exit(1);
+    }
+
+    if(!program.compileShaderFromFile("test.frag", GLSLShaderType::FRAGMENT))
+    {
+        std::cerr << "Fragment shader failed to compile\n";
+        std::cerr << "Build Log: " << program.log() << std::endl;
+        exit(1);
+    }
+
+    // possible call bindAttribLocation or bindFragDataLocation here
+
+    if(!program.link())
+    {
+        std::cerr << "Shader program failed to link\n";
+        std::cerr << "Link Log: " << program.log() << std::endl;
+    }
+
+    program.use();
+    program.printActiveAttribs();
+    program.printActiveUniforms();
+    program.setUniform("MV", glm::mat4());
+    program.setUniform("LightDir", 1.0f, 1.0f, 1.0f);
 }
 
 void ExampleApp::onMouseEvent(int button, int state, int x, int y)

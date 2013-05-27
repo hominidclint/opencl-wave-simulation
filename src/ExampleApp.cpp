@@ -25,6 +25,11 @@
 #include <iostream>
 #include <fstream>
 
+// glm TEST TODO
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform2.hpp>
+
 extern GlutApp* g_app;
 
 extern "C" static void display()
@@ -232,7 +237,16 @@ void ExampleApp::drawScene()
 
 void ExampleApp::updateScene(float dt)
 {
-    // #TODO
+    // #TODO glm test
+    glm::vec4 position = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::mat4 view = glm::lookAt(glm::vec3(0.0, 0.0, 5.0),
+                                 glm::vec3(0.0, 0.0, 0.0),
+                                 glm::vec3(0.0, 1.0, 0.0));
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, 90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 mv = view * model;
+    glm::vec4 transformed = mv * position;
 }
 
 void ExampleApp::onMouseEvent(int button, int state, int x, int y)

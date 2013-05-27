@@ -67,6 +67,8 @@ bool WaveApp::init()
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
+
+    return true;
 }
 
 void WaveApp::drawScene()

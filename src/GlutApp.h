@@ -28,6 +28,8 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 
+#include <string>
+
 #ifndef _WIN32
 #   include <GL/glxew.h>
 #endif
@@ -40,6 +42,8 @@ public:
 
     float aspectRatio();
     int run();
+    std::string queryVersionInformations() const;
+    std::string queryExtensionInformations() const;
 
     virtual bool init();
     virtual void onResize();

@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 find_package(OpenCL REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(GLM REQUIRED)
 find_package(GLUT REQUIRED)
 
 #include helper
@@ -15,7 +16,6 @@ include(${CMAKE_MODULE_PATH}/helper.cmake)
 
 set(sources
 	src/main.cpp
-	#src/gpu_waves.cpp
 	src/GlutApp.h
 	src/GlutApp.cpp
 	src/WaveApp.h
@@ -48,6 +48,7 @@ include_directories(
 	${OPENCL_INCLUDE_DIR}
 	${OPENGL_INCLUDE_DIR}
 	${GLEW_INCLUDE_DIR}
+	${GLM_INCLUDE_DIR}
 	${GLUT_INCLUDE_DIR}
 )
 

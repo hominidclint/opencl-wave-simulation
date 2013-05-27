@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include "ExampleApp.h"
+#include <string>
 
 GlutApp* g_app;
 
@@ -33,6 +34,12 @@ int main(int argc, char** argv)
     {
         return 0;
     }
+
+    std::string versionInfos = app.queryVersionInformations();
+    std::string extensionInfos = app.queryExtensionInformations();
+
+    std::cout << versionInfos << std::endl;
+    std::cout << extensionInfos << std::endl;
 
     return app.run();
 }

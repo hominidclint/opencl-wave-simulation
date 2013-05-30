@@ -21,45 +21,65 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef GRID_GENERATOR_H
-#define GRID_GENERATOR_H
+#include "GridGenerator.h"
 
-#include <vector>
-
-class GridGenerator
+void GridGenerator::CreateGrid(float width, float depth, unsigned int m, unsigned int n, MeshData& meshData)
 {
-/*public:
-    struct Vertex
+    unsigned int vertexCount = m*n;
+    unsigned int faceCount   = (m-1)*(n-1)*2;
+
+    //////////////////////////////////////////////////////////////////////////
+    // create vertices
+    //
+
+    float halfWidth = 0.5f*width;
+    float halfDepth = 0.5f*depth;
+
+    float dx = width / (n-1);
+    float dz = depth / (m-1);
+
+    float du = 1.0f / (n-1);
+    float dv = 1.0f / (m-1);
+
+    meshData.vertices.resize(vertexCount);
+    for(unsigned int i = 0; i < m; ++i)
     {
-        Vertex(){}
-        Vertex(const XMFLOAT3& position,
-               const XMFLOAT3& normal,
-               const XMFLOAT3& tangent,
-               const XMFLOAT2& uv)
-            : Position(p), Normal(n), TangentU(t), TexC(uv){}
+        float z = halfDepth - i*dz;
+        for(unsigned int j = 0; j < n; ++j)
+        {
+            float x = -halfWidth + j*dx;
 
-        Vertex(float px, float py, float pz, 
-               float nx, float ny, float nz,
-               float tx, float ty, float tz,
-               float u, float v)
-            : Position(px,py,pz), Normal(nx,ny,nz),
-              TangentU(tx, ty, tz), TexC(u,v){}
+            meshData.vertices[i*n+j].Position = glm::vec3(x, 0.0f, z);
+            meshData.vertices[i*n+j].Normal   = glm::vec3(0.0f, 1.0f, 0.0f);
+            meshData.vertices[i*n+j].TangentU = glm::vec3(1.0f, 0.0f, 0.0f);
 
-        XMFLOAT3 Position;
-        XMFLOAT3 Normal;
-        XMFLOAT3 TangentU;
-        XMFLOAT2 TexC;
-    };
+            // stretch texture over grid.
+            meshData.vertices[i*n+j].TexC.x = j*du;
+            meshData.vertices[i*n+j].TexC.y = i*dv;
+        }
+    }
 
-    struct MeshData
+    //////////////////////////////////////////////////////////////////////////
+    // Create the indices.
+    //
+
+    meshData.indices.resize(faceCount*3); // 3 indices per face
+
+    // compute indices
+    unsigned int k = 0;
+    for(unsigned int i = 0; i < m-1; ++i)
     {
-        std::vector<Vertex> Vertices;
-        std::vector<int> Indices;
-    };
+        for(unsigned int j = 0; j < n-1; ++j)
+        {
+            meshData.indices[k]   = i*n+j;
+            meshData.indices[k+1] = i*n+j+1;
+            meshData.indices[k+2] = (i+1)*n+j;
 
-    // mxn grid in the xz-plane with m rows and n columns, centered
-    // at the origin with the specified width and depth.
-    void CreateGrid(float width, float depth, UINT m, UINT n, MeshData& meshData);*/
-};
+            meshData.indices[k+3] = (i+1)*n+j;
+            meshData.indices[k+4] = i*n+j+1;
+            meshData.indices[k+5] = (i+1)*n+j+1;
 
-#endif // GRID_GENERATOR_H
+            k += 6; // next quad
+        }
+    }
+}

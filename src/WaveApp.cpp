@@ -22,36 +22,24 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "WaveApp.h"
+#include "CallbackHandler.h"
 
-extern GlutApp* g_app;
+#include <iostream>
 
-extern "C" static void display()
-{
-    g_app->drawScene();
-}
 
-extern "C" static void keyboard(unsigned char key, int x, int y)
-{
-    g_app->onKeyboardEvent(key, x, y);
-}
-
-extern "C" static void mouse(int button, int state, int x, int y)
-{
-    g_app->onMouseEvent(button, state, x, y);
-}
-
-extern "C" static void motion(int x, int y)
-{
-    g_app->onMotionEvent(x, y);
-}
 WaveApp::WaveApp(int argc, char** argv, int width, int height)
-    : GlutApp(argc, argv, width, height)
+    : GlutApp(argc, argv, width, height),
+    m_mouseBitMask(0),
+    m_rotateX(0.0f),
+    m_rotateY(0.0f),
+    m_translateZ(-5.0f),
+    m_glslProgram(new GLSLProgram)
 {
 }
 
 WaveApp::~WaveApp()
 {
-
+    delete m_glslProgram;
 };
 
 bool WaveApp::init()
@@ -67,25 +55,211 @@ bool WaveApp::init()
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
+    glutReshapeFunc(resize);
+
+    glewInit();
+
+    glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glViewport(0, 0, m_width, m_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    initScene();
 
     return true;
 }
 
+void WaveApp::buildWaveGrid()
+{
+    GLuint vboHandles[2];
+    glGenBuffers(2, vboHandles);
+    m_posVBO = vboHandles[0];
+    m_indicesVBO = vboHandles[1];
+
+    // create vertex buffer
+    glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 160 * 160, 0, GL_STREAM_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+
+    // create index buffer
+    unsigned int* indices = new unsigned int[3 * m_waves.triangleCount()];
+    unsigned int m = m_waves.rowCount();
+    unsigned int n = m_waves.columnCount();
+    unsigned int k = 0;
+    for(unsigned int i = 0; i < m-1; ++i)
+    {
+        for(unsigned int j = 0; j < n-1; ++j)
+        {
+            indices[k]   = i*n+j;
+            indices[k+1] = i*n+j+1;
+            indices[k+2] = (i+1)*n+j;
+
+            indices[k+3] = (i+1)*n+j;
+            indices[k+4] = i*n+j+1;
+            indices[k+5] = (i+1)*n+j+1;
+
+            k += 6; // next quad
+        }
+    }
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 3 * m_waves.triangleCount(), indices, GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &m_vaoHandle);
+    glBindVertexArray(m_vaoHandle);
+
+    glEnableVertexAttribArray(0); // vPos;
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO);
+    glBindVertexArray(0);
+}
+
+void WaveApp::initScene()
+{
+    if(!m_glslProgram->compileShaderFromFile("simple.vert", GLSLShader::VERTEX))
+    {
+        std::cerr << "Vertex shader failed to compile\n";
+        std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
+        exit(1);
+    }
+
+    if(!m_glslProgram->compileShaderFromFile("simple.frag", GLSLShader::FRAGMENT))
+    {
+        std::cerr << "Fragment shader failed to compile\n";
+        std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
+        exit(1);
+    }
+
+    // bindAttribLocation or bindFragDataLocation here
+    m_glslProgram->bindAttribLocation(0, "vPos");
+    m_glslProgram->bindAttribLocation(1, "vColor");
+    m_glslProgram->bindFragDataLocation(0, "FragColor");
+
+    if(!m_glslProgram->link())
+    {
+        std::cerr << "Shader program failed to link\n";
+        std::cerr << "Link Log: " << m_glslProgram->log() << std::endl;
+    }
+
+    m_glslProgram->use();
+    m_glslProgram->printActiveAttribs();
+    m_glslProgram->printActiveUniforms();
+
+    // init uniforms
+    m_modelM = glm::mat4(1.0f);
+    m_modelM *= glm::translate(0.0f, 0.0f, m_translateZ);
+    m_viewM = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m_projM = glm::perspective(45.0f, aspectRatio(), 0.1f, 100.0f);
+
+    // #TODO
+    m_waves.init(160, 160, 1.0f, 0.03f, 3.25f, 0.4f);
+    buildWaveGrid();
+}
+
+void WaveApp::onResize(int w, int h)
+{
+    m_width = w;
+    m_height = h;
+    glViewport(0, 0, m_width, m_height);
+    m_projM = glm::perspective(45.0f, aspectRatio(), 0.1f, 100.0f);
+
+    glutPostRedisplay();
+}
+
 void WaveApp::drawScene()
 {
-    updateScene(0); // #TODO
+    static float anim = 0;
+    anim *= 0.01;
+    updateScene(anim);
 
+    checkGLError(__FILE__,__LINE__);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBegin(GL_TRIANGLES);
-        glVertex3f(-0.5, -0.5, 0.0);
-        glVertex3f(-0.5, 0.0, 0.0);
-        glVertex3f(0.0, 0.5, 0.0);
-    glEnd();
+
+    // set uniforms
+    m_modelM = glm::mat4(1.0f);
+    m_modelM *= glm::translate(0.0f, 0.0f, m_translateZ);
+    m_modelM *= glm::rotate((m_rotateX), glm::vec3(1.0f,0.0f,0.0f));
+    m_modelM *= glm::rotate((m_rotateY), glm::vec3(0.0f,1.0f,0.0f));
+
+    glm::mat4 mv = m_viewM * m_modelM;
+    m_glslProgram->setUniform("MVP", m_projM * mv);
+
+    glBindVertexArray(m_vaoHandle);
+    checkGLError(__FILE__,__LINE__);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO); // FUHHHHHHHH
+    glDrawElements(GL_TRIANGLES, 3 * m_waves.triangleCount(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0))); // FUHHHHHHHHHH!!!
+
     glutSwapBuffers();
 }
 
 void WaveApp::updateScene(float dt)
 {
-    // #TODO
+    int i = 5 + rand() % (m_waves.rowCount()-10);
+    int j = 5 + rand() % (m_waves.columnCount()-10);
+
+    float r = 1.0 + ((float)(rand()) / (float)RAND_MAX) * (2.0 - 1.0); // randf(1.0, 2.0)
+    m_waves.disturb(i, j, r);
+
+    m_waves.update(dt);
+
+    // update the wave vertex buffer
+    glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
+    // test
+    float* test = new float[m_waves.rowCount() * m_waves.columnCount()];
+    test = reinterpret_cast<float*>(m_waves.getCurrentWaves());
+
+    /*for(int i = 0; i < m_waves.rowCount() * m_waves.columnCount(); ++i)
+    {
+        std::cout << test[i] << std::endl;
+    }*/
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * m_waves.rowCount() * m_waves.columnCount(),
+                 test, GL_STREAM_DRAW); // #TODO this could be wrong too FUHHHHHHHH
 }
 
+void WaveApp::onMouseEvent(int button, int state, int x, int y)
+{
+    if(state == GLUT_DOWN)
+    {
+        m_mouseBitMask |= 1<<button;
+    }
+    else if (state == GLUT_UP)
+    {
+        m_mouseBitMask = 0;
+    }
+
+    m_prevX = x;
+    m_prevY = y;
+    glutPostRedisplay();
+}
+
+void WaveApp::onKeyboardEvent(unsigned char key, int x, int y)
+{
+    switch(key)
+    {
+    case('q'):
+    case(27):
+        exit(0);
+        break;
+    }
+}
+
+void WaveApp::onMotionEvent(int x, int y)
+{
+    float dx, dy;
+    dx = static_cast<float>(x - m_prevX);
+    dy = static_cast<float>(y - m_prevY);
+
+    if(m_mouseBitMask & 1)
+    {
+        m_rotateX += dy * 0.2f;
+        m_rotateY += dx * 0.2f;
+    }
+    else if(m_mouseBitMask & 4)
+    {
+        m_translateZ += dy * 0.01f;
+    }
+
+    m_prevX = x;
+    m_prevY = y;
+}

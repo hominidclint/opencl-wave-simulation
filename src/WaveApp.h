@@ -25,19 +25,64 @@
 #define WAVE_APP_H
 
 #include "GlutApp.h"
+#include "GLSLProgram.h"
+#include "GridGenerator.h"
+#include "CpuWaves.h"
+
+#include <string>
+
+// glm
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform2.hpp>
 
 class WaveApp : public GlutApp
 {
 public:
+    struct Vertex // for interleaved arrays
+    {
+        glm::vec3 position; // strided offset 0
+        glm::vec3 normal; // strided offset 12 (3 * 4)
+        //glm::vec2 uv; // strided offset 24 (6 * 4)
+    };
+
     WaveApp(int argc, char** argv, int width, int height);
     ~WaveApp();
 
     virtual bool init();
     virtual void drawScene();
     virtual void updateScene(float dt);
+    virtual void onResize(int w, int h);
+
+    virtual void onMouseEvent(int button, int state, int x, int y);
+    virtual void onKeyboardEvent(unsigned char key, int x, int y);
+    virtual void onMotionEvent(int x, int y);
 
 protected:
+    void initScene();
+    void buildWaveGrid();
+
 private:
+    GLSLProgram* m_glslProgram;
+    GLuint m_vaoHandle;
+
+    glm::mat4 m_modelM;
+    glm::mat4 m_viewM;
+    glm::mat4 m_projM;
+
+    // navigation
+    int m_prevX;
+    int m_prevY;
+    int m_mouseBitMask;
+    float m_rotateX;
+    float m_rotateY;
+    float m_translateZ;
+
+    GridGenerator m_gridGenerator;
+    CPUWaves m_waves;
+
+    GLuint m_posVBO;
+    GLuint m_indicesVBO;
 };
 
 #endif // WAVE_APP_H

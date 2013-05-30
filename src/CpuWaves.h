@@ -20,3 +20,62 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+
+#ifndef CPU_WAVES_H
+#define CPU_WAVES_H
+
+// glm
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform2.hpp>
+
+class CPUWaves
+{
+public:
+    CPUWaves();
+    ~CPUWaves();
+
+    unsigned int rowCount() const;
+    unsigned int columnCount() const;
+    unsigned int vertexCount() const;
+    unsigned int triangleCount() const;
+    float width() const;
+    float depth() const;
+
+    inline glm::vec3* getCurrentWaves() const {return m_currSolution;}
+
+    // returns the solution at the ith grid point
+    inline const glm::vec3& operator[](int i) const {return m_currSolution[i];}
+
+    // returns the solution normal at the ith grid point.
+    inline const glm::vec3& normal(int i) const { return m_normals[i]; }
+
+    // returns the unit tangent vector at the ith grid point in the local x-axis direction.
+    inline const glm::vec3& tangentX(int i) const { return m_tangentX[i]; }
+
+    void init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping);
+    void update(float dt);
+    void disturb(unsigned int i, unsigned int j, float magnitude);
+
+private:
+    unsigned int m_nRows;
+    unsigned int m_nCols;
+
+    unsigned int m_nVertices;
+    unsigned int m_nTriangles;
+
+    // precomputed simulation constants
+    float m_k1;
+    float m_k2;
+    float m_k3;
+
+    float m_timeStep;
+    float m_spatialStep;
+
+    glm::vec3* m_prevSolution;
+    glm::vec3* m_currSolution;
+    glm::vec3* m_normals;
+    glm::vec3* m_tangentX;
+};
+
+#endif CPU_WAVES_H

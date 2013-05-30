@@ -29,10 +29,6 @@
 
 #include <string>
 
-// ocl includes
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
-
 // glm
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

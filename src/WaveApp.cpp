@@ -26,13 +26,15 @@
 
 #include <iostream>
 
+#define SIZE 512
+
 
 WaveApp::WaveApp(int argc, char** argv, int width, int height)
     : GlutApp(argc, argv, width, height),
     m_mouseBitMask(0),
     m_rotateX(0.0f),
     m_rotateY(0.0f),
-    m_translateZ(-5.0f),
+    m_translateZ(-0.0f),
     m_glslProgram(new GLSLProgram)
 {
 }
@@ -76,10 +78,11 @@ void WaveApp::buildWaveGrid()
     m_posVBO = vboHandles[0];
     m_indicesVBO = vboHandles[1];
 
+    glEnableVertexAttribArray(0); // vPos;
+
     // create vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 160 * 160, 0, GL_STREAM_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * SIZE*SIZE, reinterpret_cast<float*>(m_waves.getCurrentWaves()), GL_STREAM_DRAW);
 
     // create index buffer
     unsigned int* indices = new unsigned int[3 * m_waves.triangleCount()];
@@ -105,13 +108,17 @@ void WaveApp::buildWaveGrid()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 3 * m_waves.triangleCount(), indices, GL_STATIC_DRAW);
 
+
     glGenVertexArrays(1, &m_vaoHandle);
     glBindVertexArray(m_vaoHandle);
 
-    glEnableVertexAttribArray(0); // vPos;
+    glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO);
     glBindVertexArray(0);
+
+    delete[] indices;
 }
 
 void WaveApp::initScene()
@@ -149,10 +156,10 @@ void WaveApp::initScene()
     m_modelM = glm::mat4(1.0f);
     m_modelM *= glm::translate(0.0f, 0.0f, m_translateZ);
     m_viewM = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m_projM = glm::perspective(45.0f, aspectRatio(), 0.1f, 100.0f);
+    m_projM = glm::perspective(10.0f, aspectRatio(), 0.1f, 100.0f);
 
     // #TODO
-    m_waves.init(160, 160, 1.0f, 0.03f, 3.25f, 0.4f);
+    m_waves.init(SIZE, SIZE, 1.0f, 0.03f, 3.25f, 0.4f);
     buildWaveGrid();
 }
 
@@ -161,18 +168,18 @@ void WaveApp::onResize(int w, int h)
     m_width = w;
     m_height = h;
     glViewport(0, 0, m_width, m_height);
-    m_projM = glm::perspective(45.0f, aspectRatio(), 0.1f, 100.0f);
+    m_projM = glm::perspective(45.0f, aspectRatio(), 1.0f, 100.0f);
 
     glutPostRedisplay();
 }
 
 void WaveApp::drawScene()
 {
-    static float anim = 0;
-    anim *= 0.01;
-    updateScene(anim);
-
     checkGLError(__FILE__,__LINE__);
+    static float anim = 0;
+    anim += 0.01;
+    updateScene(anim);
+    std::cout << m_translateZ << std::endl;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // set uniforms
@@ -185,9 +192,8 @@ void WaveApp::drawScene()
     m_glslProgram->setUniform("MVP", m_projM * mv);
 
     glBindVertexArray(m_vaoHandle);
-    checkGLError(__FILE__,__LINE__);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO); // FUHHHHHHHH
-    glDrawElements(GL_TRIANGLES, 3 * m_waves.triangleCount(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0))); // FUHHHHHHHHHH!!!
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO);
+    glDrawElements(GL_TRIANGLE_FAN, 3 * m_waves.triangleCount(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0))); 
 
     glutSwapBuffers();
 }
@@ -201,20 +207,19 @@ void WaveApp::updateScene(float dt)
     m_waves.disturb(i, j, r);
 
     m_waves.update(dt);
-
+    checkGLError(__FILE__,__LINE__);
     // update the wave vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-    // test
-    float* test = new float[m_waves.rowCount() * m_waves.columnCount()];
-    test = reinterpret_cast<float*>(m_waves.getCurrentWaves());
-
-    /*for(int i = 0; i < m_waves.rowCount() * m_waves.columnCount(); ++i)
+    glm::vec3* mappedData = reinterpret_cast<glm::vec3*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+    
+    for(unsigned int i = 0; i < m_waves.vertexCount(); ++i)
     {
-        std::cout << test[i] << std::endl;
-    }*/
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * m_waves.rowCount() * m_waves.columnCount(),
-                 test, GL_STREAM_DRAW); // #TODO this could be wrong too FUHHHHHHHH
+        mappedData[i] = m_waves[i];
+        //std::cout << "(" << m_waves[i].x << ", " << m_waves[i].y << ", " << m_waves[i].z << std::endl;
+    }
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+    //std::cout << "----------------------------------------------------------------------------\n";
+    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
 }
 
 void WaveApp::onMouseEvent(int button, int state, int x, int y)
@@ -257,7 +262,8 @@ void WaveApp::onMotionEvent(int x, int y)
     }
     else if(m_mouseBitMask & 4)
     {
-        m_translateZ += dy * 0.01f;
+        //m_translateZ += dy * 0.01f;
+        m_translateZ += dy;
     }
 
     m_prevX = x;

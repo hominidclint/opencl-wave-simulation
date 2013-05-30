@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <vector>
 #include <cassert>
+#include <iostream>
 
 CPUWaves::CPUWaves()
     : m_nRows(0),

@@ -22,37 +22,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "ExampleApp.h"
+#include "CallbackHandler.h"
+
 #include <iostream>
 #include <fstream>
 
 using namespace GLSLShader;
-
-extern GlutApp* g_app;
-
-extern "C" static void display()
-{
-    g_app->drawScene();
-}
-
-extern "C" static void keyboard(unsigned char key, int x, int y)
-{
-    g_app->onKeyboardEvent(key, x, y);
-}
-
-extern "C" static void mouse(int button, int state, int x, int y)
-{
-    g_app->onMouseEvent(button, state, x, y);
-}
-
-extern "C" static void motion(int x, int y)
-{
-    g_app->onMotionEvent(x, y);
-}
-
-extern "C" static void resize(int w, int h)
-{
-    g_app->onResize(w, h);
-}
 
 ExampleApp::ExampleApp(int argc, char** argv, int width, int height, unsigned int meshWidth, unsigned int meshHeight)
     : GlutApp(argc, argv, width, height),

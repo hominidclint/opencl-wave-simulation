@@ -44,26 +44,25 @@ public:
     int run();
     std::string queryVersionInformations() const;
     std::string queryExtensionInformations() const;
-
-    /************************************************************************/
-    /* return 1 if error, else 0                                            */
-    /************************************************************************/
     int checkGLError(const char* file, int line);
 
     virtual bool init();
-    virtual void onResize(int w, int h);
+    virtual void onResize(int w, int h) = 0;
     virtual void updateScene(float dt) = 0;
     virtual void drawScene() = 0;
 
-    virtual void onMouseEvent(int button, int state, int x, int y);
-    virtual void onKeyboardEvent(unsigned char key, int x, int y);
-    virtual void onMotionEvent(int x, int y);
+    virtual void onMouseEvent(int button, int state, int x, int y) = 0;
+    virtual void onKeyboardEvent(unsigned char key, int x, int y) = 0;
+    virtual void onMotionEvent(int x, int y) = 0;
 
 protected:
     void initGlut(int argc, char** argv);
 
     int m_width;
     int m_height;
+
+    int m_argc;
+    char** m_argv;
 };
 
 #endif // GLUT_APP_H

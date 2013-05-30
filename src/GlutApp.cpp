@@ -26,10 +26,11 @@
 #include <iostream>
 
 GlutApp::GlutApp(int argc, char** argv, int width, int height)
-    : m_width(width),
+    : m_argc(argc),
+      m_argv(argv),
+      m_width(width),
       m_height(height)
 {
-    initGlut(argc, argv);
 }
 
 GlutApp::~GlutApp()
@@ -60,7 +61,8 @@ int GlutApp::run()
 
 bool GlutApp::init()
 {
-    return true; // #TODO
+    initGlut(m_argc, m_argv);
+    return true;
 }
 
 std::string GlutApp::queryVersionInformations() const
@@ -144,23 +146,4 @@ int GlutApp::checkGLError(const char* file, int line)
         glError = glGetError();
     }
     return returnValue;
-}
-
-void GlutApp::onResize(int w, int h)
-{
-}
-
-void GlutApp::onMouseEvent(int button, int state, int x, int y)
-{
-
-}
-
-void GlutApp::onKeyboardEvent(unsigned char key, int x, int y)
-{
-
-}
-
-void GlutApp::onMotionEvent(int x, int y)
-{
-
 }

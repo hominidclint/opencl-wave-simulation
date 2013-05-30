@@ -20,3 +20,37 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+
+#ifndef CALLBACK_HANDLER_H
+#define CALLBACK_HANDLER_H
+
+#include "GlutApp.h"
+
+extern GlutApp* g_app;
+
+extern "C" static void display()
+{
+    g_app->drawScene();
+}
+
+extern "C" static void keyboard(unsigned char key, int x, int y)
+{
+    g_app->onKeyboardEvent(key, x, y);
+}
+
+extern "C" static void mouse(int button, int state, int x, int y)
+{
+    g_app->onMouseEvent(button, state, x, y);
+}
+
+extern "C" static void motion(int x, int y)
+{
+    g_app->onMotionEvent(x, y);
+}
+
+extern "C" static void resize(int w, int h)
+{
+    g_app->onResize(w, h);
+}
+
+#endif // CALLBACK_HANDLER_H

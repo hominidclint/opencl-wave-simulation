@@ -25,6 +25,8 @@
 #define EXAMPLE_APP_H
 
 #include "GlutApp.h"
+#include "GLSLProgram.h"
+
 #include <string>
 
 // ocl includes
@@ -59,6 +61,7 @@ public:
 
 protected:
     void initOCL();
+    void initShader();
 
 private:
     // rendering and computing
@@ -73,6 +76,8 @@ private:
 
     unsigned int m_meshWidth;
     unsigned int m_meshHeight;
+
+    GLSLProgram m_glslProgram;
 
     GLuint m_vbo;
     cl_mem m_vbocl;

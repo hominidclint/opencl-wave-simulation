@@ -32,6 +32,8 @@ set(sources
 	src/ExampleApp.cpp
 	src/GLSLProgram.h
 	src/GLSLProgram.cpp
+	src/OpenGLOnlyApp.h
+	src/OpenGLOnlyApp.cpp
 )
 
 set(kernels

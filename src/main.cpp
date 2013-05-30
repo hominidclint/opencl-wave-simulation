@@ -23,13 +23,15 @@
 
 #include <iostream>
 #include "ExampleApp.h"
+#include "OpenGLOnlyApp.h"
 #include <string>
 
 GlutApp* g_app;
 
 int main(int argc, char** argv)
 {
-    ExampleApp app(argc, argv, 800, 600, 512, 512);
+    //ExampleApp app(argc, argv, 800, 600, 512, 512);
+    OpenGLOnlyApp app(argc, argv, 800, 600);
     if(!app.init())
     {
         return 0;

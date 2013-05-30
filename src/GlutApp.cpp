@@ -23,6 +23,7 @@
 
 #include "GlutApp.h"
 #include <sstream>
+#include <iostream>
 
 GlutApp::GlutApp(int argc, char** argv, int width, int height)
     : m_width(width),
@@ -105,16 +106,48 @@ int GlutApp::checkGLError(const char* file, int line)
     glError = glGetError();
     while(glError != GL_NO_ERROR)
     {
-        printf("glError in file %s @ line %d: %s\n", file, line, gluErrorString(glError));
+        std::string errorString;
+
+        if(glError == GL_INVALID_ENUM)
+        {
+            errorString = "GL_INVALID_ENUM";
+        }
+        else if(glError == GL_INVALID_VALUE)
+        {
+            errorString = "GL_INVALID_VALUE";
+        }
+        else if(glError == GL_INVALID_OPERATION)
+        {
+            errorString = "GL_INVALID_OPERATION";
+        }
+        else if(glError == GL_INVALID_FRAMEBUFFER_OPERATION)
+        {
+            errorString = "GL_INVALID_FRAMEBUFFER_OPERATION";
+        }
+        else if(glError == GL_STACK_UNDERFLOW)
+        {
+            errorString = "GL_STACK_UNDERFLOW";
+        }
+        else if(glError == GL_STACK_OVERFLOW)
+        {
+            errorString = "GL_STACK_OVERFLOW";
+        }
+        else
+        {
+            errorString = "UNKNOWN";
+        }
+        std::cout << "glError in file " << file << " line " << line
+                  << " "  << errorString << " " << gluErrorString(glError)
+                  << std::endl;
+
         returnValue = 1;
         glError = glGetError();
     }
     return returnValue;
 }
 
-void GlutApp::onResize()
+void GlutApp::onResize(int w, int h)
 {
-
 }
 
 void GlutApp::onMouseEvent(int button, int state, int x, int y)

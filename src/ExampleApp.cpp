@@ -25,7 +25,6 @@
 #include <iostream>
 #include <fstream>
 
-#include "GLSLProgram.h"
 using namespace GLSLShader;
 
 extern GlutApp* g_app;
@@ -89,17 +88,51 @@ bool ExampleApp::init()
 
     glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
     glViewport(0, 0, m_width, m_height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45.0, (GLfloat)m_width / (GLfloat)m_height, 0.1, 100.0);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 
+    initShader();
     initOCL();
 
     return true;
+}
+
+void ExampleApp::initShader()
+{
+    if(!m_glslProgram.compileShaderFromFile("test.vert", GLSLShader::VERTEX))
+    {
+        std::cerr << "Vertex shader failed to compile\n";
+        std::cerr << "Build Log: " << m_glslProgram.log() << std::endl;
+        exit(1);
+    }
+
+    if(!m_glslProgram.compileShaderFromFile("test.frag", GLSLShader::FRAGMENT))
+    {
+        std::cerr << "Fragment shader failed to compile\n";
+        std::cerr << "Build Log: " << m_glslProgram.log() << std::endl;
+        exit(1);
+    }
+
+    // possible call bindAttribLocation or bindFragDataLocation here
+    m_glslProgram.bindAttribLocation(0, "vPos");
+
+    if(!m_glslProgram.link())
+    {
+        std::cerr << "Shader program failed to link\n";
+        std::cerr << "Link Log: " << m_glslProgram.log() << std::endl;
+    }
+
+    // build projection matrix
+    glm::mat4 projM = glm::perspective(45.0f, GLfloat(m_width) / GLfloat(m_height), 0.1f, 100.0f);
+    //glm::mat4 viewM = glm::lookAt(glm::vec3(0.0, 5.0, 10.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    glm::mat4 viewM = glm::mat4(1.0);
+
+    m_glslProgram.use();
+    m_glslProgram.setUniform("projM", projM);
+    m_glslProgram.setUniform("viewM", viewM);
+
+    m_glslProgram.printActiveAttribs();
+    m_glslProgram.printActiveUniforms();
 }
 
 void ExampleApp::initOCL()
@@ -203,16 +236,25 @@ void ExampleApp::drawScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render computed data
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0.0, 0.0, m_translateZ);
-    glRotatef(m_rotateX, 1.0, 0.0, 0.0);
-    glRotatef(m_rotateY, 0.0, 1.0, 0.0);
+
+    glm::mat4 translateM = glm::translate(glm::vec3(0.0, 0.0, m_translateZ));
+    glm::mat4 rotateX = glm::rotate(m_rotateX, glm::vec3(1.0, 0.0, 0.0));
+    glm::mat4 rotateY = glm::rotate(m_rotateY,glm::vec3(0.0, 1.0, 0.0));
+
+    glm::mat4 modelM = glm::mat4(1.0f); // identity matrix
+    modelM = modelM * translateM * rotateX * rotateY;
+    //modelM = glm::rotate(modelM, m_rotateX, glm::vec3(1.0, 0.0, 0.0));
+    //modelM = glm::rotate(modelM, m_rotateY, glm::vec3(0.0, 1.0, 0.0));
+
+    m_glslProgram.setUniform("modelM", modelM);
+
 
     // render from the p_vbo
+
+    // map index 0 to the position buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glVertexPointer(4, GL_FLOAT, 0, 0);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+    glBindVertexArray(m_vbo);
 
     // draw points, lines or triangles according to the user keyboard input
     switch(m_drawMode)
@@ -228,53 +270,11 @@ void ExampleApp::drawScene()
         break;
     }
 
-    glDisableClientState(GL_VERTEX_ARRAY);
     glutSwapBuffers();
-    glutPostRedisplay();
 }
 
 void ExampleApp::updateScene(float dt)
 {
-    // #TODO glm test
-    glm::vec4 position = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0, 0.0, 5.0),
-                                 glm::vec3(0.0, 0.0, 0.0),
-                                 glm::vec3(0.0, 1.0, 0.0));
-
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, 90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 mv = view * model;
-    glm::vec4 transformed = mv * position;
-
-    // #todo glsl test
-    GLSLProgram program;
-    if(!program.compileShaderFromFile("test.vert", GLSLShaderType::VERTEX))
-    {
-        std::cerr << "Vertex shader failed to compile\n";
-        std::cerr << "Build Log: " << program.log() << std::endl;
-        exit(1);
-    }
-
-    if(!program.compileShaderFromFile("test.frag", GLSLShaderType::FRAGMENT))
-    {
-        std::cerr << "Fragment shader failed to compile\n";
-        std::cerr << "Build Log: " << program.log() << std::endl;
-        exit(1);
-    }
-
-    // possible call bindAttribLocation or bindFragDataLocation here
-
-    if(!program.link())
-    {
-        std::cerr << "Shader program failed to link\n";
-        std::cerr << "Link Log: " << program.log() << std::endl;
-    }
-
-    program.use();
-    program.printActiveAttribs();
-    program.printActiveUniforms();
-    program.setUniform("MV", glm::mat4());
-    program.setUniform("LightDir", 1.0f, 1.0f, 1.0f);
 }
 
 void ExampleApp::onMouseEvent(int button, int state, int x, int y)

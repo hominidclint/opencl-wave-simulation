@@ -21,49 +21,63 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef GLUT_APP_H
-#define GLUT_APP_H
+#ifndef OPENGL_ONLY_APP_H
+#define OPENGL_ONLY_APP_H
 
-// ogl includes
-#include <GL/glew.h>
-#include <GL/glut.h>
+#include "GlutApp.h"
+#include "GLSLProgram.h"
 
 #include <string>
 
-#ifndef _WIN32
-#   include <GL/glxew.h>
-#endif
+// ocl includes
+#include <CL/cl.h>
+#include <CL/cl_gl.h>
 
-class GlutApp
+// glm
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform2.hpp>
+
+class OpenGLOnlyApp : public GlutApp
 {
 public:
-    GlutApp(int argc, char** argv, int width, int height);
-    ~GlutApp();
+    struct Vertex // for interleaved arrays
+    {
+        glm::vec3 position; // strided offset 0
+        glm::vec3 normal; // strided offset 12 (3 * 4)
+        glm::vec2 uv; // strided offset 24 (6 * 4)
+    };
 
-    float aspectRatio();
-    int run();
-    std::string queryVersionInformations() const;
-    std::string queryExtensionInformations() const;
-
-    /************************************************************************/
-    /* return 1 if error, else 0                                            */
-    /************************************************************************/
-    int checkGLError(const char* file, int line);
+    OpenGLOnlyApp(int argc, char** argv, int width, int height);
+    ~OpenGLOnlyApp();
 
     virtual bool init();
+    virtual void drawScene();
+    virtual void updateScene(float dt);
     virtual void onResize(int w, int h);
-    virtual void updateScene(float dt) = 0;
-    virtual void drawScene() = 0;
 
     virtual void onMouseEvent(int button, int state, int x, int y);
     virtual void onKeyboardEvent(unsigned char key, int x, int y);
     virtual void onMotionEvent(int x, int y);
 
 protected:
-    void initGlut(int argc, char** argv);
+    void initScene();
 
-    int m_width;
-    int m_height;
+private:
+    GLSLProgram* m_glslProgram;
+    GLuint m_vaoHandle;
+
+    glm::mat4 m_modelM;
+    glm::mat4 m_viewM;
+    glm::mat4 m_projM;
+
+    // navigation
+    int m_prevX;
+    int m_prevY;
+    int m_mouseBitMask;
+    float m_rotateX;
+    float m_rotateY;
+    float m_translateZ;
 };
 
-#endif // GLUT_APP_H
+#endif // OPENGL_ONLY_APP_H

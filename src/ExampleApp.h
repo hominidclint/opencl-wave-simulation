@@ -54,6 +54,7 @@ public:
     virtual bool init();
     virtual void drawScene();
     virtual void updateScene(float dt);
+    virtual void onResize(int w, int h);
 
     virtual void onMouseEvent(int button, int state, int x, int y);
     virtual void onKeyboardEvent(unsigned char key, int x, int y);
@@ -77,7 +78,12 @@ private:
     unsigned int m_meshWidth;
     unsigned int m_meshHeight;
 
-    GLSLProgram m_glslProgram;
+    GLSLProgram* m_glslProgram;
+    GLuint m_vaoHandle;
+
+    glm::mat4 m_modelM;
+    glm::mat4 m_viewM;
+    glm::mat4 m_projM;
 
     GLuint m_vbo;
     cl_mem m_vbocl;

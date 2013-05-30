@@ -49,6 +49,11 @@ extern "C" static void motion(int x, int y)
     g_app->onMotionEvent(x, y);
 }
 
+extern "C" static void resize(int w, int h)
+{
+    g_app->onResize(w, h);
+}
+
 ExampleApp::ExampleApp(int argc, char** argv, int width, int height, unsigned int meshWidth, unsigned int meshHeight)
     : GlutApp(argc, argv, width, height),
       m_meshWidth(meshWidth),
@@ -59,7 +64,8 @@ ExampleApp::ExampleApp(int argc, char** argv, int width, int height, unsigned in
       m_rotateY(0.0f),
       m_translateZ(-5.0f),
       m_argc(argc),
-      m_drawMode(GL_LINE_STRIP)
+      m_drawMode(GL_LINE_STRIP),
+      m_glslProgram(new GLSLProgram)
 {
     m_global[0] = meshWidth;
     m_global[1] = meshHeight;
@@ -83,56 +89,66 @@ bool ExampleApp::init()
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
+    glutReshapeFunc(resize);
 
     glewInit();
 
     glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
+    glDisable(GL_DEPTH_TEST);
     glViewport(0, 0, m_width, m_height);
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    initShader();
     initOCL();
+    initShader();
+    
 
     return true;
 }
 
 void ExampleApp::initShader()
 {
-    if(!m_glslProgram.compileShaderFromFile("test.vert", GLSLShader::VERTEX))
+    if(!m_glslProgram->compileShaderFromFile("test.vert", GLSLShader::VERTEX))
     {
         std::cerr << "Vertex shader failed to compile\n";
-        std::cerr << "Build Log: " << m_glslProgram.log() << std::endl;
+        std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
         exit(1);
     }
 
-    if(!m_glslProgram.compileShaderFromFile("test.frag", GLSLShader::FRAGMENT))
+    if(!m_glslProgram->compileShaderFromFile("test.frag", GLSLShader::FRAGMENT))
     {
         std::cerr << "Fragment shader failed to compile\n";
-        std::cerr << "Build Log: " << m_glslProgram.log() << std::endl;
+        std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
         exit(1);
     }
 
     // possible call bindAttribLocation or bindFragDataLocation here
-    m_glslProgram.bindAttribLocation(0, "vPos");
+    m_glslProgram->bindAttribLocation(0, "vPos");
+    m_glslProgram->bindFragDataLocation(0, "FragColor");
 
-    if(!m_glslProgram.link())
+    if(!m_glslProgram->link())
     {
         std::cerr << "Shader program failed to link\n";
-        std::cerr << "Link Log: " << m_glslProgram.log() << std::endl;
+        std::cerr << "Link Log: " << m_glslProgram->log() << std::endl;
     }
 
-    // build projection matrix
-    glm::mat4 projM = glm::perspective(45.0f, GLfloat(m_width) / GLfloat(m_height), 0.1f, 100.0f);
-    //glm::mat4 viewM = glm::lookAt(glm::vec3(0.0, 5.0, 10.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-    glm::mat4 viewM = glm::mat4(1.0);
+    m_glslProgram->use();
+    m_glslProgram->printActiveAttribs();
+    m_glslProgram->printActiveUniforms();
 
-    m_glslProgram.use();
-    m_glslProgram.setUniform("projM", projM);
-    m_glslProgram.setUniform("viewM", viewM);
+    // init uniforms
+    m_modelM = glm::mat4(1.0f);
+    m_modelM *= glm::translate(0.0f, 0.0f, m_translateZ);
+    m_viewM = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m_projM = glm::perspective(45.0f, aspectRatio(), 0.1f, 100.0f);
 
-    m_glslProgram.printActiveAttribs();
-    m_glslProgram.printActiveUniforms();
+    glGenVertexArrays(1, &m_vaoHandle);
+    glBindVertexArray(m_vaoHandle);
+
+    glEnableVertexAttribArray(0); // vPos
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+    glBindVertexArray(0);
 }
 
 void ExampleApp::initOCL()
@@ -233,28 +249,21 @@ void ExampleApp::drawScene()
     clEnqueueReleaseGLObjects(m_queue, 1, &m_vbocl, 0, 0, 0);
     clFinish(m_queue); // sync
 
+    checkGLError(__FILE__,__LINE__);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // render computed data
+    // set uniforms
+    m_modelM = glm::mat4(1.0f);
+    m_modelM *= glm::translate(0.0f, 0.0f, m_translateZ);
+    m_modelM *= glm::rotate((m_rotateX), glm::vec3(1.0f,0.0f,0.0f));
+    m_modelM *= glm::rotate((m_rotateY), glm::vec3(0.0f,1.0f,0.0f));
 
-    glm::mat4 translateM = glm::translate(glm::vec3(0.0, 0.0, m_translateZ));
-    glm::mat4 rotateX = glm::rotate(m_rotateX, glm::vec3(1.0, 0.0, 0.0));
-    glm::mat4 rotateY = glm::rotate(m_rotateY,glm::vec3(0.0, 1.0, 0.0));
-
-    glm::mat4 modelM = glm::mat4(1.0f); // identity matrix
-    modelM = modelM * translateM * rotateX * rotateY;
-    //modelM = glm::rotate(modelM, m_rotateX, glm::vec3(1.0, 0.0, 0.0));
-    //modelM = glm::rotate(modelM, m_rotateY, glm::vec3(0.0, 1.0, 0.0));
-
-    m_glslProgram.setUniform("modelM", modelM);
+    glm::mat4 mv = m_viewM * m_modelM;
+    m_glslProgram->setUniform("MVP", m_projM * mv);
 
 
     // render from the p_vbo
-
-    // map index 0 to the position buffer
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
-    glBindVertexArray(m_vbo);
+    glBindVertexArray(m_vaoHandle);
 
     // draw points, lines or triangles according to the user keyboard input
     switch(m_drawMode)
@@ -271,6 +280,16 @@ void ExampleApp::drawScene()
     }
 
     glutSwapBuffers();
+}
+
+void ExampleApp::onResize(int w, int h)
+{
+    m_width = w;
+    m_height = h;
+    glViewport(0, 0, m_width, m_height);
+    m_projM = glm::perspective(45.0f, aspectRatio(), 0.1f, 100.0f);
+
+    glutPostRedisplay();
 }
 
 void ExampleApp::updateScene(float dt)
@@ -310,7 +329,6 @@ void ExampleApp::onKeyboardEvent(unsigned char key, int x, int y)
         case GL_LINE_STRIP: m_drawMode = GL_POINTS; break;
         default: m_drawMode = GL_POINTS; break;
         }
-        glutPostRedisplay();
     }
 }
 

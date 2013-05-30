@@ -73,8 +73,6 @@ bool OpenGLOnlyApp::init()
         return false;
     }
 
-    checkGLError(__FILE__,__LINE__);
-
     ::g_app = this;
     glutDisplayFunc(display);
     glutIdleFunc(display);

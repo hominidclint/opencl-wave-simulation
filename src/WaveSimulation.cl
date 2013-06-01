@@ -39,5 +39,5 @@ __kernel void wave_simulation(__global float4* pos, unsigned int width,
   
     // write output vertex
     //pos[y*width+x] = (float4)(u, w, v, 1.0f);
-    pos[y*width+x] = (float4)(x, w, y, 1.0f);
+    pos[y*width+x] = (float4)(x, w * width / 16.0f, y, 1.0f);
 }

@@ -21,18 +21,23 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
+// own
 #include "ExampleApp.h"
 #include "OpenGLOnlyApp.h"
 #include "WaveApp.h"
+#include "WaveSim.h"
+
+// std
 #include <string>
+#include <iostream>
 
 GlutApp* g_app;
 
 int main(int argc, char** argv)
 {
     //ExampleApp app(argc, argv, 800, 600, 512, 512);
-    WaveApp app(argc, argv, 800, 600);
+    //WaveApp app(argc, argv, 800, 600);
+    WaveSim app(argc, argv, 800, 600);
     //OpenGLOnlyApp app(argc, argv, 800, 600);
     if(!app.init())
     {
@@ -40,10 +45,10 @@ int main(int argc, char** argv)
     }
 
     std::string versionInfos = app.queryVersionInformations();
-    std::string extensionInfos = app.queryExtensionInformations();
+    //std::string extensionInfos = app.queryExtensionInformations();
 
     std::cout << versionInfos << std::endl;
-    std::cout << extensionInfos << std::endl;
+    //std::cout << extensionInfos << std::endl;
 
     return app.run();
 }

@@ -21,63 +21,23 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef GPU_WAVES_H
-#define GPU_WAVES_H
-
-// ocl
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
-
-// glm
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform2.hpp>
-
-class GPUWaves
+__kernel void wave_simulation(__global float4* pos, unsigned int width, 
+                       unsigned int height, float time)
 {
-public:
-    GPUWaves();
-    ~GPUWaves();
-
-    unsigned int rowCount() const;
-    unsigned int columnCount() const;
-    unsigned int vertexCount() const;
-    unsigned int triangleCount() const;
-    float width() const;
-    float depth() const;
-
-    // getCurrentGrid
-    void init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping);
-    void update(float dt);
-    void disturb(unsigned int i, unsigned int j, float magnitude);
-
-private:
-    // buildwavesimulationmaps()
-
-    unsigned int m_nRows;
-    unsigned int m_nCols;
-
-    unsigned int m_nVertices;
-    unsigned int m_nTriangles;
-
-    // precomputed simulation constants
-    float m_k1;
-    float m_k2;
-    float m_k3;
-
-    float m_timeStep;
-    float m_spatialStep;
-
-
-    // ping pong buffers needed! #TODO!!!
-    cl_mem m_prevSolution;
-    cl_mem m_currSolution;
-    cl_mem m_nextSolution;
-
-    // normals and tangents can be computed with finite difference scheme
-    // -> only need the current Solution for computation
-    cl_mem m_normals;
-    cl_mem m_tangents;
-};
-
-#endif // GPU_WAVES_H
+    unsigned int x = get_global_id(0);
+    unsigned int y = get_global_id(1);
+  
+    // calculate uv coordinates
+    float u = x / (float) width;
+    float v = y / (float) height;
+    u = u*2.0f - 1.0f;
+    v = v*2.0f - 1.0f;
+  
+    // calculate simple sine wave pattern
+    float freq = 4.0f;
+    float w = sin(u*freq + time) * cos(v*freq + time) * 0.5f;
+  
+    // write output vertex
+    //pos[y*width+x] = (float4)(u, w, v, 1.0f);
+    pos[y*width+x] = (float4)(x, w, y, 1.0f);
+}

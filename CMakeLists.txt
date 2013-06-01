@@ -58,15 +58,26 @@ set(sources
 	src/OpenGLOnlyApp.h
 	src/OpenGLOnlyApp.cpp
 	src/CallbackHandler.h
+	src/WaveSim.h
+	src/WaveSim.cpp
 )
 
 set(kernels
 	src/fxWaves.cl
+	src/WaveSimulation.cl
+)
+
+set(fx
+	src/shader/simple.vert
+	src/shader/simple.frag
+	src/shader/test.vert
+	src/shader/test.frag
 )
 
 set(all_sources
 	${sources}
 	${kernels}
+	${fx}
 )
 
 add_executable(${target} ${all_sources})
@@ -89,6 +100,7 @@ target_link_libraries(${target}
 
 install(TARGETS ${target} DESTINATION bin)
 install(FILES ${kernels} DESTINATION bin)
+install(FILES ${fx} DESTINATION bin)
 
 # hack
 install(FILES ${GLEW_INCLUDE_DIR}/../bin/glew32.dll DESTINATION bin)

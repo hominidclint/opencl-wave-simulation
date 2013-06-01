@@ -78,4 +78,4 @@ private:
     glm::vec3* m_tangentX;
 };
 
-#endif CPU_WAVES_H
+#endif // CPU_WAVES_H

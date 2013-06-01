@@ -48,7 +48,7 @@ public:
     ~OpenGLOnlyApp();
 
     virtual bool init();
-    virtual void drawScene();
+    virtual void render();
     virtual void updateScene(float dt);
     virtual void onResize(int w, int h);
 

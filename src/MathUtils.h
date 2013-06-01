@@ -20,3 +20,24 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+
+#ifndef MATH_UTILS_H
+#define MATH_UTILS_H
+
+class MathUtils
+{
+public:
+    static float randF();
+    static float randF(float a, float b);
+    
+    template<typename T>
+    static T clamp(const T& x, const T& low, const T& high)
+    {
+        return x < low ? low : (x > high ? high : x); 
+    }
+    
+    static const float Pi;
+
+};
+
+#endif // MATH_UTILS_H

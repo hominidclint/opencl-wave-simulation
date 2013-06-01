@@ -20,3 +20,19 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+
+#include "MathUtils.h"
+#include <cmath>
+#include <cstdlib>
+
+const float MathUtils::Pi = 3.1415926535f;
+
+float MathUtils::randF()
+{
+    return (float)(rand()) / (float)RAND_MAX;
+}
+
+float MathUtils::randF(float a, float b)
+{
+    return a + randF()*(b-a);
+}

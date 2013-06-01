@@ -49,7 +49,7 @@ public:
     virtual bool init();
     virtual void onResize(int w, int h) = 0;
     virtual void updateScene(float dt) = 0;
-    virtual void drawScene() = 0;
+    virtual void render() = 0;
 
     virtual void onMouseEvent(int button, int state, int x, int y) = 0;
     virtual void onKeyboardEvent(unsigned char key, int x, int y) = 0;

@@ -30,7 +30,7 @@ extern GlutApp* g_app;
 
 extern "C" static void display()
 {
-    g_app->drawScene();
+    g_app->render();
 }
 
 extern "C" static void keyboard(unsigned char key, int x, int y)

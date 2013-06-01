@@ -43,6 +43,7 @@ public:
     {
         glm::vec3 position; // strided offset 0
         glm::vec3 normal; // strided offset 12 (3 * 4)
+        glm::vec4 color;
         //glm::vec2 uv; // strided offset 24 (6 * 4)
     };
 
@@ -50,7 +51,7 @@ public:
     ~WaveApp();
 
     virtual bool init();
-    virtual void drawScene();
+    virtual void render();
     virtual void updateScene(float dt);
     virtual void onResize(int w, int h);
 
@@ -71,12 +72,13 @@ private:
     glm::mat4 m_projM;
 
     // navigation
+    float m_theta;
+    float m_phi;
+    float m_radius;
+
     int m_prevX;
     int m_prevY;
     int m_mouseBitMask;
-    float m_rotateX;
-    float m_rotateY;
-    float m_translateZ;
 
     GridGenerator m_gridGenerator;
     CPUWaves m_waves;

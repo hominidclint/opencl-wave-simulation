@@ -63,7 +63,7 @@ public:
     struct MeshData
     {
         std::vector<Vertex> vertices;
-        std::vector<int> indices;
+        std::vector<unsigned int> indices;
     };
 
     // mxn grid in the xz-plane with m rows and n columns, centered

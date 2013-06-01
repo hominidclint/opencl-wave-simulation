@@ -205,7 +205,7 @@ void ExampleApp::initOCL()
     clSetKernelArg(m_kernel, 2, sizeof(unsigned int), &m_meshHeight);
 }
 
-void ExampleApp::drawScene()
+void ExampleApp::render()
 {
     updateScene(0); // #TODO
 

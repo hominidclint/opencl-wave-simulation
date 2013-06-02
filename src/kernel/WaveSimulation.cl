@@ -21,8 +21,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-kernel void compute_vertex_displacement(global float4* prevGrid,
-                                        global float4* currGrid,
+kernel void compute_vertex_displacement(global float3* prevGrid,
+                                        global float3* currGrid,
                                         int width,
                                         float k1,
                                         float k2,
@@ -36,13 +36,14 @@ kernel void compute_vertex_displacement(global float4* prevGrid,
     //
 
     prevGrid[y*width+x].y = k1 *  prevGrid[y*width+x].y     +
-                          = k2 *  currGrid[y*width+x].y     +
-                          = k3 * (currGrid[(y+1)*width+x].y +
+                            k2 *  currGrid[y*width+x].y     +
+                            k3 * (currGrid[(y+1)*width+x].y +
                                   currGrid[(y-1)*width+x].y +
                                   currGrid[y*width+(x+1)].y +
                                   currGrid[y*width+(x-1)].y);
 }
 
+// #TODO float4 to float3
 kernel void compute_finite_difference_scheme(global float4* currGrid,
                                              global float4* normals,
                                              global float4* tangents,
@@ -57,17 +58,17 @@ kernel void compute_finite_difference_scheme(global float4* currGrid,
     float t = currGrid[(y-1)*width+x].y;
     float b = currGrid[(y+1)*width+x].y;
 
-    float3 estimatedNormal  = (float3)(l-r, 2.0f*spatialStep, b-t);
-    float3 estimatedTangent = (float3)(2.0f*spatialStep, r-l, 0.0f);
+    float4 estimatedNormal  = (float4)(l-r, 2.0f*spatialStep, b-t, 1.0f);
+    float4 estimatedTangent = (float4)(2.0f*spatialStep, r-l, 0.0f, 1.0f);
 
     normals[y*width+x]  = normalize(estimatedNormal);
     tangents[y*width+x] = normalize(estimatedTangent);
 }
 
-kernel void disturb_grid(global float4* currGrid,
+kernel void disturb_grid(global float3* currGrid,
                          unsigned int i,
                          unsigned int j,
-                         unsigned int width, // assumes grid is quadratic
+                         int width, // assumes grid is quadratic
                          float magnitude)
 {
     unsigned int x = get_global_id(0);
@@ -79,14 +80,12 @@ kernel void disturb_grid(global float4* currGrid,
     // only this specific thread is disturbing the ijth vertex height and its neighbors
     //
 
-    if((x != 1 && y != 1))
+    if((x == 1 && y == 1))
     {
-        return;
+        currGrid[i*width+j].y     += magnitude;
+        currGrid[i*width+(j+1)].y += halfMagnitude;
+        currGrid[i*width+(j-1)].y += halfMagnitude;
+        currGrid[(i+1)*width+j].y += halfMagnitude;
+        currGrid[(i-1)*width+j].y += halfMagnitude;
     }
-
-    currGrid[i*width+j].y     += magnitude;
-    currGrid[i*width+(j+1)].y += halfMagnitude;
-    currGrid[i*width+(j-1)].y += halfMagnitude;
-    currGrid[(i+1)*width+j].y += halfMagnitude;
-    currGrid[(i-1)*width+j].y += halfMagnitude;
 }

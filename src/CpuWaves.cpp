@@ -83,6 +83,21 @@ float CPUWaves::depth() const
 }
 
 
+const float* CPUWaves::k1() const
+{
+    return &m_k1;
+}
+
+const float* CPUWaves::k2() const
+{
+    return &m_k2;
+}
+
+const float* CPUWaves::k3() const
+{
+    return &m_k3;
+}
+
 void CPUWaves::init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping)
 {
     m_nRows = m;

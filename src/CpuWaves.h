@@ -41,6 +41,9 @@ public:
     unsigned int triangleCount() const;
     float width() const;
     float depth() const;
+    const float* k1() const;
+    const float* k2() const;
+    const float* k3() const;
 
     inline glm::vec3* getCurrentWaves() const {return m_currSolution;}
 

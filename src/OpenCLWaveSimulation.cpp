@@ -30,7 +30,7 @@
 #include <iostream>
 #include <fstream>
 
-#define VERTEX_SIZE 4
+#define VERTEX_SIZE 3
 
 OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, int width, int height, int gridWidth, int gridHeight)
     : GlutApp(argc, argv, width, height),
@@ -42,7 +42,8 @@ OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, int width, int
       m_phi(0.1f * MathUtils::Pi),
       m_radius(200.0f),
       m_prevX(0),
-      m_prevY(0)
+      m_prevY(0),
+      m_pingpong(true)
 {
     m_global[0] = gridWidth;
     m_global[1] = gridHeight;
@@ -78,20 +79,21 @@ bool OpenCLWaveSimulation::init()
 
     initScene();
     initOCL();
+    m_timer.start();
 
     return true;
 }
 
 void OpenCLWaveSimulation::initScene()
 {
-    if(!m_glslProgram->compileShaderFromFile("simple.vert", GLSLShader::VERTEX))
+    if(!m_glslProgram->compileShaderFromFile("render_waves.vert", GLSLShader::VERTEX))
     {
         std::cerr << "Vertex shader failed to compile\n";
         std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
         exit(1);
     }
 
-    if(!m_glslProgram->compileShaderFromFile("simple.frag", GLSLShader::FRAGMENT))
+    if(!m_glslProgram->compileShaderFromFile("render_waves.frag", GLSLShader::FRAGMENT))
     {
         std::cerr << "Fragment shader failed to compile\n";
         std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
@@ -126,11 +128,12 @@ void OpenCLWaveSimulation::buildWaveGrid()
     assert(m_gridWidth == m_gridHeight);
     m_waves.init(m_gridWidth, m_gridHeight, 1.0f, 0.03f, 3.25f, 0.4f); // #TODO
 
-    GLuint vboHandles[3];
-    glGenBuffers(3, vboHandles);
+    GLuint vboHandles[4];
+    glGenBuffers(4, vboHandles);
     m_vboPing = vboHandles[0];
     m_vboPong = vboHandles[1];
-    m_indices = vboHandles[2];
+    m_indicesPing = vboHandles[2];
+    m_indicesPong = vboHandles[3];
 
     // create vertex buffers
     glBindBuffer(GL_ARRAY_BUFFER, m_vboPing);
@@ -161,7 +164,10 @@ void OpenCLWaveSimulation::buildWaveGrid()
         }
     }
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indices);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesPing);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 3 * m_waves.triangleCount(), indices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesPong);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 3 * m_waves.triangleCount(), indices, GL_STATIC_DRAW);
 
     GLuint vaoHandles[2];
@@ -173,14 +179,14 @@ void OpenCLWaveSimulation::buildWaveGrid()
     glEnableVertexAttribArray(0); // vPos; #TODO color, normals etc
     glBindBuffer(GL_ARRAY_BUFFER, m_vboPing);
     glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indices);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesPing);
     glBindVertexArray(0);
 
     glBindVertexArray(m_vaoPong);
     glEnableVertexAttribArray(0); // vPos #TODO
     glBindBuffer(GL_ARRAY_BUFFER, m_vboPong);
     glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indices);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesPong);
     glBindVertexArray(0);
 
     delete[] indices;
@@ -267,8 +273,6 @@ void OpenCLWaveSimulation::initOCL()
         std::cerr << "Error: Failed to create compute kernel: disturb_grid!" << std::endl;
         exit(1);
     }
-
-    // #TODO add kernel arguments
 }
 
 void OpenCLWaveSimulation::onResize(int w, int h)
@@ -288,14 +292,47 @@ void OpenCLWaveSimulation::render()
     static float anim = 0;
     anim += 0.01f;
     updateScene(anim);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glm::mat4 mv = m_viewM * m_modelM;
-    m_glslProgram->setUniform("MVP", m_projM * mv);
+    if(m_pingpong)
+    {
+        glBindVertexArray(m_vaoPing);
+    }
+    else
+    {
+        glBindVertexArray(m_vaoPong);
+    }
+    glDrawElements(GL_TRIANGLES, 3 * m_waves.triangleCount(), GL_UNSIGNED_INT, ((GLubyte*)NULL + (0)));
+    //glDrawArrays(GL_POINTS, 0, m_waves.vertexCount());
 
-    // #TODO rendering
-
+    m_pingpong = !m_pingpong;
     glutSwapBuffers();
+
+    //////////////////////////////////////////////////////////////////////////
+    // test
+    //
+
+    //glBindBuffer(GL_ARRAY_BUFFER, m_vboPing);
+    //glm::vec4* mappedData = reinterpret_cast<glm::vec4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY));
+
+    /*if(m_pingpong)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, m_vboPing);
+    }
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, m_vboPong);
+    }
+    glm::vec3* mappedData = reinterpret_cast<glm::vec3*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+    */
+    for(unsigned int i = 0; i < 1000; ++i)
+    {
+        //mappedData[i] = m_waves[i];
+        std::cout << "tata" << std::endl;
+    }
+    //glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
 void OpenCLWaveSimulation::updateScene(float dt)
@@ -311,15 +348,93 @@ void OpenCLWaveSimulation::updateScene(float dt)
     glm::vec3 up(0.0f, 1.0f, 0.0f);
     m_viewM = glm::lookAt(pos, target, up);
 
+    glm::mat4 mv = m_viewM * m_modelM;
+    m_glslProgram->setUniform("MVP", m_projM * mv);
+
+    glFinish();
+
+    if(m_timer.getPassedTimeSinceStart() >= 0.4f) //0.4 seconds
+    {
+        std::cout << "disturb()\n";
+        //disturbGrid(); // hat wenig auswirkung
+        m_timer.stop();
+        m_timer.start();
+    }
+
+    computeVertexDisplacement();
+}
+
+void OpenCLWaveSimulation::computeVertexDisplacement()
+{
+    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
+    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+
+    if(m_pingpong)
+    {
+        clSetKernelArg(m_vertexDisplacementKernel, 0, sizeof(cl_mem), (void*)&m_clPing);
+        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clPong);
+    }
+    else
+    {
+        clSetKernelArg(m_vertexDisplacementKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
+        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clPing); // #TODO
+    }
+
+    clSetKernelArg(m_vertexDisplacementKernel, 2, sizeof(int), &m_gridWidth);
+    clSetKernelArg(m_vertexDisplacementKernel, 3, sizeof(float), m_waves.k1());
+    clSetKernelArg(m_vertexDisplacementKernel, 4, sizeof(float), m_waves.k2());
+    clSetKernelArg(m_vertexDisplacementKernel, 5, sizeof(float), m_waves.k3());
+
+    // compute vertex displacement
+    if(clEnqueueNDRangeKernel(m_queue, m_vertexDisplacementKernel, 2, NULL, m_global, NULL, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Vertex Displacement Kernel Execution failed\n";
+    }
+
+
+    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
+    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+    clFinish(m_queue);
+}
+
+void OpenCLWaveSimulation::disturbGrid()
+{
+    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
+    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+
+    if(m_pingpong)
+    {
+        // computeVertex displacement swapped the buffers
+        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
+    }
+    else
+    {
+        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clPing);
+    }
+
     int i = 5 + rand() % (m_waves.rowCount()-10);
     int j = 5 + rand() % (m_waves.columnCount()-10);
-
     float r = MathUtils::randF(1.0f, 2.0f);
+
+    // hack
     m_waves.disturb(i, j, r);
+    m_waves.update(0);
 
-    m_waves.update(dt);
+    clSetKernelArg(m_disturbKernel, 1, sizeof(unsigned int), &i);
+    clSetKernelArg(m_disturbKernel, 2, sizeof(unsigned int), &j);
+    clSetKernelArg(m_disturbKernel, 3, sizeof(int), &m_gridWidth);
+    clSetKernelArg(m_disturbKernel, 4, sizeof(float), &r);
 
-    // #TODO
+
+    // disturb grid
+    if(clEnqueueNDRangeKernel(m_queue, m_disturbKernel, 2, NULL, m_global, NULL, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Disturb Grid Kernel Execution failed\n";
+    }
+
+    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
+    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+    clFinish(m_queue);
 }
 
 void OpenCLWaveSimulation::onMouseEvent(int button, int state, int x, int y)
@@ -360,8 +475,8 @@ void OpenCLWaveSimulation::onMotionEvent(int x, int y)
     }
     else if(m_mouseBitMask & 4)
     {
-        float dx = 0.2f * static_cast<float>(x - m_prevX);
-        float dy = 0.2f * static_cast<float>(y - m_prevY);
+        float dx = 0.8f * static_cast<float>(x - m_prevX);
+        float dy = 0.8f * static_cast<float>(y - m_prevY);
 
         m_radius += dx - dy;
         m_radius = MathUtils::clamp(m_radius, 1.0f, 500.0f);

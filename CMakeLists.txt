@@ -25,6 +25,7 @@ cmake_minimum_required(VERSION 2.8.10.2)
 project(OGL_OCL_Interop)
 set(target OGLInteropOCL)
 
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 #find libs
@@ -60,6 +61,7 @@ set(sources
 	src/CallbackHandler.h
 	src/OpenCLWaveSimulation.h
 	src/OpenCLWaveSimulation.cpp
+	src/Chronometer.hpp
 )
 
 set(kernels
@@ -72,6 +74,8 @@ set(fx
 	src/fx/simple.frag
 	src/fx/test.vert
 	src/fx/test.frag
+	src/fx/render_waves.vert
+	src/fx/render_waves.frag
 )
 
 set(all_sources
@@ -98,11 +102,11 @@ target_link_libraries(${target}
 	${GLUT_LIBRARY}
 )
 
-install(TARGETS ${target} DESTINATION bin)
-install(FILES ${kernels} DESTINATION bin)
-install(FILES ${fx} DESTINATION bin)
+install(TARGETS ${target} DESTINATION build)
+install(FILES ${kernels} DESTINATION build)
+install(FILES ${fx} DESTINATION build)
 
 # hack
 if(WIN32)
-	install(FILES ${GLEW_INCLUDE_DIR}/../bin/glew32.dll DESTINATION bin)
+	#install(FILES ${GLEW_INCLUDE_DIR}/../bin/glew32.dll DESTINATION bin)
 endif()

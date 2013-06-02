@@ -27,6 +27,7 @@
 // own
 #include "GlutApp.h"
 #include "GLSLProgram.h"
+#include "Chronometer.hpp"
 //#include "GpuWaves.h"
 #include "CpuWaves.h"
 
@@ -63,6 +64,9 @@ protected:
 
     void buildWaveGrid();
 
+    void computeVertexDisplacement();
+    void disturbGrid();
+
 private:
     // ocl
     cl_platform_id m_platform;
@@ -94,10 +98,14 @@ private:
 
     GLuint m_vboPing;
     GLuint m_vboPong;
-    GLuint m_indices;
+    GLuint m_indicesPing;
+    GLuint m_indicesPong;
     
     // animation
     float m_dt;
+    Chronometer m_timer;
+    bool m_pingpong;
+
     //GPUWaves m_waves;
     CPUWaves m_waves;
 

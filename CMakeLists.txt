@@ -58,12 +58,13 @@ set(sources
 	src/OpenGLOnlyApp.h
 	src/OpenGLOnlyApp.cpp
 	src/CallbackHandler.h
+	src/OpenCLWaveSimulation.h
+	src/OpenCLWaveSimulation.cpp
 )
 
 set(kernels
 	src/kernel/fxWaves.cl
-	src/kernel/ComputeVertexDisplacement.cl
-	src/kernel/ComputeFiniteDifferenceScheme.cl
+	src/kernel/WaveSimulation.cl
 )
 
 set(fx

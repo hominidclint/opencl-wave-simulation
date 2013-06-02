@@ -39,45 +39,6 @@ public:
     GPUWaves();
     ~GPUWaves();
 
-    unsigned int rowCount() const;
-    unsigned int columnCount() const;
-    unsigned int vertexCount() const;
-    unsigned int triangleCount() const;
-    float width() const;
-    float depth() const;
-
-    // getCurrentGrid
-    void init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping);
-    void update(float dt);
-    void disturb(unsigned int i, unsigned int j, float magnitude);
-
-private:
-    // buildwavesimulationmaps()
-
-    unsigned int m_nRows;
-    unsigned int m_nCols;
-
-    unsigned int m_nVertices;
-    unsigned int m_nTriangles;
-
-    // precomputed simulation constants
-    float m_k1;
-    float m_k2;
-    float m_k3;
-
-    float m_timeStep;
-    float m_spatialStep;
-
-
-    // ping pong buffers needed! #TODO!!!
-    cl_mem m_prevSolution;
-    cl_mem m_currSolution;
-    cl_mem m_nextSolution;
-
-    // normals and tangents can be computed with finite difference scheme
-    // -> only need the current Solution for computation
-    cl_mem m_normals;
-    cl_mem m_tangents;
 };
 
 #endif // GPU_WAVES_H

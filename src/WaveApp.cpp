@@ -180,7 +180,7 @@ void WaveApp::render()
     checkGLError(__FILE__,__LINE__);
 
     static float anim = 0;
-    anim += 0.01;
+    anim += 0.01f;
     updateScene(anim);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

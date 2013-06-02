@@ -25,6 +25,7 @@
 #include "ExampleApp.h"
 #include "OpenGLOnlyApp.h"
 #include "WaveApp.h"
+#include "OpenCLWaveSimulation.h"
 
 // std
 #include <string>
@@ -35,7 +36,8 @@ GlutApp* g_app;
 int main(int argc, char** argv)
 {
     //ExampleApp app(argc, argv, 800, 600, 512, 512);
-    WaveApp app(argc, argv, 800, 600);
+    //WaveApp app(argc, argv, 800, 600);
+    OpenCLWaveSimulation app(argc, argv, 800, 600, 160, 160);
     //OpenGLOnlyApp app(argc, argv, 800, 600);
     if(!app.init())
     {

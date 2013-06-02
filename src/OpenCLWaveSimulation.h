@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Hannes Würfel <hannes.wuerfel@student.hpi.uni-potsdam.de>
+// Copyright (c) 2013, Hannes WÃ¼rfel <hannes.wuerfel@student.hpi.uni-potsdam.de>
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -21,39 +21,32 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef WAVE_SIM_H
-#define WAVE_SIM_H
+#ifndef OPENCL_WAVE_SIMULATION_H
+#define OPENCL_WAVE_SIMULATION_H
 
+// own
 #include "GlutApp.h"
 #include "GLSLProgram.h"
-#include "GridGenerator.h"
-#include "CpuWaves.h" // #TODO replace with gpu implementation
 //#include "GpuWaves.h"
+#include "CpuWaves.h"
+
+// std
+#include <string>
 
 // ocl
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
-
-// std
-#include <string>
 
 // glm
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform2.hpp>
 
-class WaveSim : public GlutApp
+class OpenCLWaveSimulation : public GlutApp
 {
 public:
-    struct Vertex // for interleaved arrays
-    {
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec4 color;
-    };
-
-    WaveSim(int argc, char** argv, int width, int height);
-    ~WaveSim();
+    OpenCLWaveSimulation(int argc, char** argv, int width, int height, int gridWidth, int gridHeight);
+    ~OpenCLWaveSimulation();
 
     virtual bool init();
     virtual void render();
@@ -67,18 +60,46 @@ public:
 protected:
     void initScene();
     void initOCL();
+
     void buildWaveGrid();
 
 private:
+    // ocl
+    cl_platform_id m_platform;
+    cl_device_id m_device;
+    cl_context m_context;
+    cl_command_queue m_queue;
+    cl_program m_program;
+    cl_kernel m_vertexDisplacementKernel;
+    cl_kernel m_finiteDifferenceSchemeKernel;
+    cl_kernel m_disturbKernel;
+    cl_mem m_clPing;
+    cl_mem m_clPong;
+    size_t m_kernelsize;
+    size_t m_global[2];
+    std::string m_fxFilePath;
+    std::string m_programSource;
+
+    int m_gridWidth;
+    int m_gridHeight;
+
+    // ogl
     GLSLProgram* m_glslProgram;
-    GLuint m_vaoHandle;
+    GLuint m_vaoPing;
+    GLuint m_vaoPong;
 
     glm::mat4 m_modelM;
     glm::mat4 m_viewM;
     glm::mat4 m_projM;
 
-    int m_meshWidth;
-    int m_meshHeight;
+    GLuint m_vboPing;
+    GLuint m_vboPong;
+    GLuint m_indices;
+    
+    // animation
+    float m_dt;
+    //GPUWaves m_waves;
+    CPUWaves m_waves;
 
     // navigation
     float m_theta;
@@ -88,28 +109,6 @@ private:
     int m_prevX;
     int m_prevY;
     int m_mouseBitMask;
-
-    GridGenerator m_gridGenerator;
-    CPUWaves m_waves;
-
-    GLuint m_posVBO;
-    GLuint m_indicesVBO;
-
-    // ocl
-    cl_platform_id m_platform;
-    cl_device_id m_device;
-    cl_context m_context;
-    cl_command_queue m_queue;
-    cl_program m_program;
-    cl_kernel m_kernel;
-    size_t m_kernelsize;
-    size_t m_global[2];
-    cl_mem m_vbocl;
-
-    // file loading
-    std::string m_fxFilePath;
-    std::string m_programSource;
-
 };
 
-#endif // WAVE_SIM_H
+#endif // OPENCL_WAVE_SIMULATION_H

@@ -41,6 +41,8 @@ GlutApp::~GlutApp()
 void GlutApp::initGlut(int argc, char** argv)
 {
     glutInit(&argc, argv);
+    glutInitContextVersion(4, 0);
+    glutInitContextFlags(GLUT_CORE_PROFILE | GLUT_DEBUG);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowPosition(glutGet(GLUT_SCREEN_WIDTH)/2 - m_width/2,
                            glutGet(GLUT_SCREEN_HEIGHT)/2 - m_height/2);

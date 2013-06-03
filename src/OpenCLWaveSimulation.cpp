@@ -31,6 +31,8 @@
 #include <fstream>
 
 #define VERTEX_SIZE 3
+#define PING 0
+#define PONG 1
 
 OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, int width, int height, int gridWidth, int gridHeight)
     : GlutApp(argc, argv, width, height),
@@ -228,8 +230,18 @@ void OpenCLWaveSimulation::initOCL()
     m_queue = clCreateCommandQueue(m_context, m_device, 0, NULL);
 
     // create buffers
-    m_clPing = clCreateFromGLBuffer(m_context, CL_MEM_READ_WRITE, m_vboPing, NULL);
-    m_clPong = clCreateFromGLBuffer(m_context, CL_MEM_READ_WRITE, m_vboPong, NULL);
+    int errCode;
+    m_clVBOs[PING] = clCreateFromGLBuffer(m_context, CL_MEM_READ_WRITE, m_vboPing, &errCode);
+    if(errCode != CL_SUCCESS)
+    {
+        std::cerr << "Failed creating cl_mem from gl buffer (PING)\n";
+    }
+
+    m_clVBOs[PONG] = clCreateFromGLBuffer(m_context, CL_MEM_READ_WRITE, m_vboPong, &errCode);
+    if(errCode != CL_SUCCESS)
+    {
+        std::cerr << "Failed creating cl_mem from gl buffer (PONG)\n";
+    }
 
     // load source file
     std::ifstream file("WaveSimulation.cl");
@@ -317,7 +329,7 @@ void OpenCLWaveSimulation::render()
     //glBindBuffer(GL_ARRAY_BUFFER, m_vboPing);
     //glm::vec4* mappedData = reinterpret_cast<glm::vec4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY));
 
-    /*if(m_pingpong)
+    if(m_pingpong)
     {
         glBindBuffer(GL_ARRAY_BUFFER, m_vboPing);
     }
@@ -326,13 +338,13 @@ void OpenCLWaveSimulation::render()
         glBindBuffer(GL_ARRAY_BUFFER, m_vboPong);
     }
     glm::vec3* mappedData = reinterpret_cast<glm::vec3*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-    */
-    for(unsigned int i = 0; i < 1000; ++i)
+    
+    for(unsigned int i = 0; i < m_waves.vertexCount(); ++i)
     {
-        //mappedData[i] = m_waves[i];
-        std::cout << "tata" << std::endl;
+        mappedData[i] = m_waves[i];
+        //std::cout << "tata" << std::endl;
     }
-    //glUnmapBuffer(GL_ARRAY_BUFFER);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
 void OpenCLWaveSimulation::updateScene(float dt)
@@ -351,12 +363,14 @@ void OpenCLWaveSimulation::updateScene(float dt)
     glm::mat4 mv = m_viewM * m_modelM;
     m_glslProgram->setUniform("MVP", m_projM * mv);
 
+    m_waves.update(0);
+
     glFinish();
 
     if(m_timer.getPassedTimeSinceStart() >= 0.4f) //0.4 seconds
     {
         std::cout << "disturb()\n";
-        //disturbGrid(); // hat wenig auswirkung
+        disturbGrid(); // hat wenig auswirkung
         m_timer.stop();
         m_timer.start();
     }
@@ -366,18 +380,23 @@ void OpenCLWaveSimulation::updateScene(float dt)
 
 void OpenCLWaveSimulation::computeVertexDisplacement()
 {
-    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
-    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+    //clEnqueueAcquireGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
+    //clEnqueueAcquireGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+    if(clEnqueueAcquireGLObjects(m_queue, 2, &m_clVBOs[0], 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to acquire gl buffer\n";
+    }
+    
 
     if(m_pingpong)
     {
-        clSetKernelArg(m_vertexDisplacementKernel, 0, sizeof(cl_mem), (void*)&m_clPing);
-        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clPong);
+        clSetKernelArg(m_vertexDisplacementKernel, 0, sizeof(cl_mem), (void*)&m_clVBOs[PING]);
+        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clVBOs[PONG]);
     }
     else
     {
-        clSetKernelArg(m_vertexDisplacementKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
-        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clPing);
+        clSetKernelArg(m_vertexDisplacementKernel, 0, sizeof(cl_mem), (void*)&m_clVBOs[PONG]);
+        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clVBOs[PING]);
     }
 
     clSetKernelArg(m_vertexDisplacementKernel, 2, sizeof(int), &m_gridWidth);
@@ -392,24 +411,29 @@ void OpenCLWaveSimulation::computeVertexDisplacement()
     }
 
 
-    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
-    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+    clEnqueueReleaseGLObjects(m_queue, 2, &m_clVBOs[0], 0, 0, 0);
+    //clEnqueueReleaseGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
     clFinish(m_queue);
 }
 
 void OpenCLWaveSimulation::disturbGrid()
 {
-    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
-    clEnqueueAcquireGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+    //clEnqueueAcquireGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
+    //clEnqueueAcquireGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+
+    if(clEnqueueAcquireGLObjects(m_queue, 2, &m_clVBOs[0], 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to acquire gl buffer\n";
+    }
 
     if(m_pingpong)
     {
         // computeVertex displacement swapped the buffers
-        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
+        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clVBOs[PONG]);
     }
     else
     {
-        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clPing);
+        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clVBOs[PING]);
     }
 
     int i = 5 + rand() % (m_waves.rowCount()-10);
@@ -418,7 +442,6 @@ void OpenCLWaveSimulation::disturbGrid()
 
     // hack
     m_waves.disturb(i, j, r);
-    m_waves.update(0);
 
     clSetKernelArg(m_disturbKernel, 1, sizeof(unsigned int), &i);
     clSetKernelArg(m_disturbKernel, 2, sizeof(unsigned int), &j);
@@ -432,8 +455,9 @@ void OpenCLWaveSimulation::disturbGrid()
         std::cerr << "Disturb Grid Kernel Execution failed\n";
     }
 
-    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
-    clEnqueueReleaseGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
+    clEnqueueReleaseGLObjects(m_queue, 2, &m_clVBOs[0], 0, 0, 0);
+    //clEnqueueReleaseGLObjects(m_queue, 1, &m_clPing, 0, 0, 0);
+    //clEnqueueReleaseGLObjects(m_queue, 1, &m_clPong, 0, 0, 0);
     clFinish(m_queue);
 }
 

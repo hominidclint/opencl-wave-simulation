@@ -21,8 +21,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-kernel void compute_vertex_displacement(global float3* prevGrid,
-                                        global float3* currGrid,
+__kernel void compute_vertex_displacement(__global float3* prevGrid,
+                                        __global float3* currGrid,
                                         int width,
                                         float k1,
                                         float k2,
@@ -44,11 +44,11 @@ kernel void compute_vertex_displacement(global float3* prevGrid,
 }
 
 // #TODO float4 to float3
-kernel void compute_finite_difference_scheme(global float4* currGrid,
-                                             global float4* normals,
-                                             global float4* tangents,
-                                             int width,
-                                             float spatialStep)
+__kernel void compute_finite_difference_scheme(__global float3* currGrid,
+                                               __global float3* normals,
+                                               __global float3* tangents,
+                                               int width,
+                                               float spatialStep)
 {
     unsigned int x = get_global_id(0);
     unsigned int y = get_global_id(1);
@@ -58,14 +58,14 @@ kernel void compute_finite_difference_scheme(global float4* currGrid,
     float t = currGrid[(y-1)*width+x].y;
     float b = currGrid[(y+1)*width+x].y;
 
-    float4 estimatedNormal  = (float4)(l-r, 2.0f*spatialStep, b-t, 1.0f);
-    float4 estimatedTangent = (float4)(2.0f*spatialStep, r-l, 0.0f, 1.0f);
+    float3 estimatedNormal  = (float3)(l-r, 2.0f*spatialStep, b-t);
+    float3 estimatedTangent = (float3)(2.0f*spatialStep, r-l, 0.0f);
 
     normals[y*width+x]  = normalize(estimatedNormal);
     tangents[y*width+x] = normalize(estimatedTangent);
 }
 
-kernel void disturb_grid(global float3* currGrid,
+__kernel void disturb_grid(__global float3* currGrid,
                          unsigned int i,
                          unsigned int j,
                          int width, // assumes grid is quadratic

@@ -77,8 +77,9 @@ private:
     cl_kernel m_vertexDisplacementKernel;
     cl_kernel m_finiteDifferenceSchemeKernel;
     cl_kernel m_disturbKernel;
-    cl_mem m_clPing;
-    cl_mem m_clPong;
+    cl_mem m_clVBOs[2];
+    //cl_mem m_clPing;
+    //cl_mem m_clPong;
     size_t m_kernelsize;
     size_t m_global[2];
     std::string m_fxFilePath;

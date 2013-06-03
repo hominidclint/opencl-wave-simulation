@@ -1,7 +1,6 @@
 #version 400
 
-layout (location = 0) in vec3 vPos;
-//layout (location = 1) in vec4 vColor;
+layout (location = 0) in vec4 vPos;
 
 uniform mat4 MVP;
 
@@ -9,6 +8,7 @@ out vec4 color;
 
 void main()
 {
-	color = vec4(1.0, 1.0, 1.0, 1.0);//vColor;
-	gl_Position = MVP * vec4(vPos, 1.0);
+	color = vec4(0.5, 0.5, 0.5, 1.0);
+	//gl_Position = MVP * vec4(vPos, 1.0);
+	gl_Position = MVP * vPos;
 }

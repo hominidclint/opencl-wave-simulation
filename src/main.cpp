@@ -33,7 +33,7 @@
 
 GlutApp* g_app;
 
-#define SIZE 20
+#define SIZE 200
 
 int main(int argc, char** argv)
 {

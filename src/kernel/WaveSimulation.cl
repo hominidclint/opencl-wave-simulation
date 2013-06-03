@@ -21,29 +21,42 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-__kernel void compute_vertex_displacement(__global float3* prevGrid,
-                                        __global float3* currGrid,
-                                        int width,
-                                        float k1,
-                                        float k2,
-                                        float k3)
+__kernel void compute_vertex_displacement(__global float4* prevGrid,
+                                          __global float4* currGrid,
+                                          __global float4* glBuffer,
+                                          int width,
+                                          float k1,
+                                          float k2,
+                                          float k3)
 {
     unsigned int x = get_global_id(0);
     unsigned int y = get_global_id(1);
 
-    //
-    // will be swapped on the host side after the kernel call
-    //
+    // this is the way to go => boundary checks!!!
+    if(x < get_global_size(0) && y < get_global_size(1))
+    {
+        prevGrid[y*width+x].y = k1 *  prevGrid[y*width+x].y     +
+                                k2 *  currGrid[y*width+x].y     +
+                                k3 * (currGrid[(y+1)*width+x].y +
+                                      currGrid[(y-1)*width+x].y +
+                                      currGrid[y*width+(x+1)].y +
+                                      currGrid[y*width+(x-1)].y);
 
-    prevGrid[y*width+x].y = k1 *  prevGrid[y*width+x].y     +
-                            k2 *  currGrid[y*width+x].y     +
-                            k3 * (currGrid[(y+1)*width+x].y +
-                                  currGrid[(y-1)*width+x].y +
-                                  currGrid[y*width+(x+1)].y +
-                                  currGrid[y*width+(x-1)].y);
+        glBuffer[y*width+x] = prevGrid[y*width+x];
+    }
 }
 
-// #TODO float4 to float3
+// initialization kernel
+__kernel void initialize_gl_grid(__global float4* glBuffer,
+                                 __global float4* clBuffer,
+                                 int width)
+{
+    unsigned int x = get_global_id(0);
+    unsigned int y = get_global_id(1);
+
+    glBuffer[y*width+x] = clBuffer[y*width+x];
+}
+
 __kernel void compute_finite_difference_scheme(__global float3* currGrid,
                                                __global float3* normals,
                                                __global float3* tangents,
@@ -65,27 +78,18 @@ __kernel void compute_finite_difference_scheme(__global float3* currGrid,
     tangents[y*width+x] = normalize(estimatedTangent);
 }
 
+// works
 __kernel void disturb_grid(__global float3* currGrid,
-                         unsigned int i,
-                         unsigned int j,
-                         int width, // assumes grid is quadratic
-                         float magnitude)
+                           unsigned int i,
+                           unsigned int j,
+                           int width, // assumes grid is quadratic
+                           float magnitude)
 {
-    unsigned int x = get_global_id(0);
-    unsigned int y = get_global_id(1);
-
     float halfMagnitude = 0.5f * magnitude;
 
-    //
-    // only this specific thread is disturbing the ijth vertex height and its neighbors
-    //
-
-    if((x == 1 && y == 1))
-    {
-        currGrid[i*width+j].y     += magnitude;
-        currGrid[i*width+(j+1)].y += halfMagnitude;
-        currGrid[i*width+(j-1)].y += halfMagnitude;
-        currGrid[(i+1)*width+j].y += halfMagnitude;
-        currGrid[(i-1)*width+j].y += halfMagnitude;
-    }
+    currGrid[i*width+j].y     += magnitude;
+    currGrid[i*width+(j+1)].y += halfMagnitude;
+    currGrid[i*width+(j-1)].y += halfMagnitude;
+    currGrid[(i+1)*width+j].y += halfMagnitude;
+    currGrid[(i-1)*width+j].y += halfMagnitude;
 }

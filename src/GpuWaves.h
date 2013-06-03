@@ -39,6 +39,43 @@ public:
     GPUWaves();
     ~GPUWaves();
 
+    const unsigned int* getIndices() const;
+    glm::vec4* getVertices() const;
+
+    unsigned int rowCount() const;
+    unsigned int columnCount() const;
+    unsigned int vertexCount() const;
+    unsigned int triangleCount() const;
+    float width() const;
+    float depth() const;
+    const float* k1() const;
+    const float* k2() const;
+    const float* k3() const;
+
+    void init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping);
+
+protected:
+    void createIndices();
+
+private:
+    unsigned int m_nRows;
+    unsigned int m_nCols;
+
+    unsigned int m_nVertices;
+    unsigned int m_nTriangles;
+
+    // precomputed simulation constants
+    float m_k1;
+    float m_k2;
+    float m_k3;
+
+    float m_timeStep;
+    float m_spatialStep;
+
+    glm::vec4* m_vertices;
+    glm::vec3* m_normals;
+    glm::vec3* m_tangentsX;
+    unsigned int* m_indices;
 };
 
 #endif // GPU_WAVES_H

@@ -28,8 +28,7 @@
 #include "GlutApp.h"
 #include "GLSLProgram.h"
 #include "Chronometer.hpp"
-//#include "GpuWaves.h"
-#include "CpuWaves.h"
+#include "GpuWaves.h"
 
 // std
 #include <string>
@@ -65,7 +64,9 @@ protected:
     void buildWaveGrid();
 
     void computeVertexDisplacement();
+    //void computeFiniteDifferenceScheme(); // TODO
     void disturbGrid();
+    void initGLBuffer();
 
 private:
     // ocl
@@ -74,12 +75,16 @@ private:
     cl_context m_context;
     cl_command_queue m_queue;
     cl_program m_program;
+
     cl_kernel m_vertexDisplacementKernel;
     cl_kernel m_finiteDifferenceSchemeKernel;
     cl_kernel m_disturbKernel;
-    cl_mem m_clVBOs[2];
-    //cl_mem m_clPing;
-    //cl_mem m_clPong;
+    cl_kernel m_glGridInitKernel;
+
+    cl_mem m_clInteropBuffer;
+    cl_mem m_clPing;
+    cl_mem m_clPong;
+
     size_t m_kernelsize;
     size_t m_global[2];
     std::string m_fxFilePath;
@@ -90,25 +95,21 @@ private:
 
     // ogl
     GLSLProgram* m_glslProgram;
-    GLuint m_vaoPing;
-    GLuint m_vaoPong;
+    GLuint m_vaoWaves;
 
     glm::mat4 m_modelM;
     glm::mat4 m_viewM;
     glm::mat4 m_projM;
 
-    GLuint m_vboPing;
-    GLuint m_vboPong;
-    GLuint m_indicesPing;
-    GLuint m_indicesPong;
+    GLuint m_vbo;
+    GLuint m_ibo;
     
     // animation
     float m_dt;
     Chronometer m_timer;
     bool m_pingpong;
 
-    //GPUWaves m_waves;
-    CPUWaves m_waves;
+    GPUWaves m_waves;
 
     // navigation
     float m_theta;

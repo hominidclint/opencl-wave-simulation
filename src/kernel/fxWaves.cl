@@ -38,5 +38,5 @@ __kernel void sinewave(__global float4* pos, unsigned int width,
     float w = sin(u*freq + time) * cos(v*freq + time) * 0.5f;
   
     // write output vertex
-    pos[y*width+x] = (float4)(u, w, v, 1.0f);
+    pos[y*width+x] = (float4)(u, 0.0f, v, 1.0f);
 }

@@ -2,9 +2,9 @@
 
 layout (location = 0) out vec4 FragColor;
 
-in vec4 color;
+in vec3 LightIntensity;
 
 void main()
 {
-	FragColor = color;
+	FragColor = vec4(0.5, 0.5, 0.5, 1.0);//vec4(LightIntensity, 1.0);
 }

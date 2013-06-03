@@ -377,7 +377,7 @@ void OpenCLWaveSimulation::computeVertexDisplacement()
     else
     {
         clSetKernelArg(m_vertexDisplacementKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
-        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clPing); // #TODO
+        clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clPing);
     }
 
     clSetKernelArg(m_vertexDisplacementKernel, 2, sizeof(int), &m_gridWidth);

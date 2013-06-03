@@ -38,8 +38,8 @@ GlutApp* g_app;
 int main(int argc, char** argv)
 {
     //ExampleApp app(argc, argv, 800, 600, 512, 512);
-    //WaveApp app(argc, argv, 800, 600);
-    OpenCLWaveSimulation app(argc, argv, 800, 600, SIZE, SIZE);
+    WaveApp app(argc, argv, 800, 600);
+    //OpenCLWaveSimulation app(argc, argv, 800, 600, SIZE, SIZE);
     //OpenGLOnlyApp app(argc, argv, 800, 600);
     if(!app.init())
     {

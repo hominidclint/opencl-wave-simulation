@@ -46,6 +46,7 @@ public:
     const float* k3() const;
 
     inline glm::vec3* getCurrentWaves() const {return m_currSolution;}
+    inline glm::vec3* getCurrentNormals() const {return m_normals;}
 
     // returns the solution at the ith grid point
     inline const glm::vec3& operator[](int i) const {return m_currSolution[i];}

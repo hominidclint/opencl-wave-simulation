@@ -74,15 +74,16 @@ std::string GlutApp::queryVersionInformations() const
     const GLubyte* version = glGetString(GL_VERSION);
     const GLubyte* glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    GLint major, minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    //GLint major, minor;
+    //glGetIntegerv(GL_MAJOR_VERSION, &major);
+    //glGetIntegerv(GL_MINOR_VERSION, &minor);
 
     std::stringstream sstream;
-    sstream << "GL Vendor: " << vendor << "\n"
+    sstream << "System: \n"
+            << "------------------------------------------------\n"
+            << "GL Vendor: " << vendor << "\n"
             << "GL Renderer: " << renderer << "\n"
             << "GL Version (string): " << version << "\n"
-            << "GL Version (integer): " << major << "." << minor << "\n"
             << "GLSL Version: " << glslVersion << "\n";
 
     return sstream.str();
@@ -94,6 +95,10 @@ std::string GlutApp::queryExtensionInformations() const
     glGetIntegerv(GL_NUM_EXTENSIONS, &nExtensions);
 
     std::stringstream sstream;
+
+    sstream << "Extensions: \n"
+            << "------------------------------------------------\n";
+
     for(int i = 0; i < nExtensions; ++i)
     {
         sstream << glGetStringi(GL_EXTENSIONS, i) << "\n";

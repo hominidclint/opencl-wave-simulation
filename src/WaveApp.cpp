@@ -29,9 +29,7 @@
 
 #include <iostream>
 
-#define SIZE 256
-
-WaveApp::WaveApp(int argc, char** argv, const std::string& appName, int width, int height)
+WaveApp::WaveApp(int argc, char** argv, const std::string& appName, int width, int height, int gridWidth, int gridHeight)
     : GlutApp(argc, argv, appName, width, height),
     m_mouseBitMask(0),
     m_glslProgram(new GLSLProgram),
@@ -39,7 +37,9 @@ WaveApp::WaveApp(int argc, char** argv, const std::string& appName, int width, i
     m_phi(0.1f * MathUtils::Pi),
     m_radius(200.0f),
     m_prevX(0),
-    m_prevY(0)
+    m_prevY(0),
+    m_gridWidth(gridWidth),
+    m_gridHeight(gridHeight)
 {
 }
 
@@ -77,7 +77,7 @@ bool WaveApp::init()
 
 void WaveApp::buildWaveGrid()
 {
-    m_waves.init(SIZE, SIZE, 1.0f, 0.03f, 3.25f, 0.4f);
+    m_waves.init(m_gridWidth, m_gridHeight, 1.0f, 0.03f, 3.25f, 0.4f);
 
     GLuint vboHandles[3];
     glGenBuffers(3, vboHandles);
@@ -87,10 +87,10 @@ void WaveApp::buildWaveGrid()
 
     // create vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * SIZE*SIZE, reinterpret_cast<float*>(m_waves.getCurrentWaves()), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * m_gridWidth*m_gridHeight, reinterpret_cast<float*>(m_waves.getCurrentWaves()), GL_STREAM_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * SIZE*SIZE, reinterpret_cast<float*>(m_waves.getCurrentNormals()), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * m_gridWidth*m_gridHeight, reinterpret_cast<float*>(m_waves.getCurrentNormals()), GL_STREAM_DRAW);
 
     // create index buffer
     unsigned int* indices = new unsigned int[3 * m_waves.triangleCount()];
@@ -168,7 +168,7 @@ void WaveApp::initScene()
     // init uniforms
     m_modelM = glm::mat4(1.0f);
     m_viewM = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m_projM = glm::perspective(glm::degrees(0.25f * MathUtils::Pi), aspectRatio(), 1.0f, 1000.0f);
+    m_projM = glm::perspective(glm::degrees(0.25f * MathUtils::Pi), aspectRatio(), 1.0f, 2048.0f);
 
     m_glslProgram->setUniform("LightDir", glm::vec3(0.57735f, -0.57735f, 0.57735f));
     m_glslProgram->setUniform("LightAmbient", glm::vec3(0.2f, 0.2f, 0.2f));
@@ -186,7 +186,7 @@ void WaveApp::onResize(int w, int h)
     m_width = w;
     m_height = h;
     glViewport(0, 0, m_width, m_height);
-    m_projM = glm::perspective(glm::degrees(0.25f * MathUtils::Pi), aspectRatio(), 1.0f, 1000.0f);
+    m_projM = glm::perspective(glm::degrees(0.25f * MathUtils::Pi), aspectRatio(), 1.0f, 2048.0f);
 
     glutPostRedisplay();
 }
@@ -195,9 +195,8 @@ void WaveApp::render()
 {
     checkGLError(__FILE__,__LINE__);
 
-    static float anim = 0;
-    anim += 0.01f;
-    updateScene(anim);
+    measurePerformance();
+    updateScene(m_fpsChronometer.getPassedTimeSinceStart());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glm::mat4 mv = m_viewM * m_modelM;
@@ -289,11 +288,11 @@ void WaveApp::onMotionEvent(int x, int y)
     }
     else if(m_mouseBitMask & 4)
     {
-        float dx = 0.2f * static_cast<float>(x - m_prevX);
-        float dy = 0.2f * static_cast<float>(y - m_prevY);
+        float dx = 0.8f * static_cast<float>(x - m_prevX);
+        float dy = 0.8f * static_cast<float>(y - m_prevY);
 
         m_radius += dx - dy;
-        m_radius = MathUtils::clamp(m_radius, 1.0f, 500.0f);
+        m_radius = MathUtils::clamp(m_radius, 1.0f, 1024.0f);
     }
 
     m_prevX = x;

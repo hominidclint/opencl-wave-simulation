@@ -22,9 +22,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 // own
-#include "ExampleApp.h"
-#include "OpenGLOnlyApp.h"
-#include "WaveApp.h"
 #include "OpenCLWaveSimulation.h"
 
 // std
@@ -33,14 +30,11 @@
 
 GlutApp* g_app;
 
-#define SIZE 200
+#define SIZE 1024
 
 int main(int argc, char** argv)
 {
-    //ExampleApp app(argc, argv, 800, 600, 512, 512);
-    //WaveApp app(argc, argv, 800, 600);
     OpenCLWaveSimulation app(argc, argv, "OpenCL-Wave-Simulation", 800, 600, SIZE, SIZE);
-    //OpenGLOnlyApp app(argc, argv, 800, 600);
     if(!app.init())
     {
         return 0;

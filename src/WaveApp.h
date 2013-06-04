@@ -26,7 +26,6 @@
 
 #include "GlutApp.h"
 #include "GLSLProgram.h"
-#include "GridGenerator.h"
 #include "CpuWaves.h"
 
 #include <string>
@@ -39,15 +38,7 @@
 class WaveApp : public GlutApp
 {
 public:
-    struct Vertex // for interleaved arrays
-    {
-        glm::vec3 position; // strided offset 0
-        glm::vec3 normal; // strided offset 12 (3 * 4)
-        glm::vec4 color;
-        //glm::vec2 uv; // strided offset 24 (6 * 4)
-    };
-
-    WaveApp(int argc, char** argv, const std::string& appName, int width, int height);
+    WaveApp(int argc, char** argv, const std::string& appName, int width, int height, int gridWidth, int gridHeight);
     ~WaveApp();
 
     virtual bool init();
@@ -80,12 +71,14 @@ private:
     int m_prevY;
     int m_mouseBitMask;
 
-    GridGenerator m_gridGenerator;
     CPUWaves m_waves;
 
     GLuint m_posVBO;
     GLuint m_normalVBO;
     GLuint m_indicesVBO;
+
+    int m_gridWidth;
+    int m_gridHeight;
 };
 
 #endif // WAVE_APP_H

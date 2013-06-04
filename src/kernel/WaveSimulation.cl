@@ -46,22 +46,6 @@ __kernel void compute_vertex_displacement(__global float4* prevGrid,
     }
 }
 
-// initialization kernel
-__kernel void initialize_gl_grid(__global float4* glPositionBuffer,
-                                 __global float4* glNormalBuffer,
-                                 __global float4* glTangentBuffer,
-                                 __global float4* clPositionBuffer,
-                                 int width)
-{
-    unsigned int x = get_global_id(0);
-    unsigned int y = get_global_id(1);
-
-    glPositionBuffer[y*width+x] = clPositionBuffer[y*width+x];
-    glNormalBuffer[y*width+x]   = (float4)(0.0f, 1.0f, 0.0f, 1.0f);
-    glTangentBuffer[y*width+x]  = (float4)(1.0f, 0.0f, 0.0f, 1.0f);
-
-}
-
 __kernel void compute_finite_difference_scheme(__global float4* currGrid,
                                                __global float4* glNormalBuffer,
                                                __global float4* glTangentBuffer,
@@ -84,6 +68,22 @@ __kernel void compute_finite_difference_scheme(__global float4* currGrid,
         glNormalBuffer[y*width+x]  = normalize(estimatedNormal);
         glTangentBuffer[y*width+x] = normalize(estimatedTangent);
     }
+}
+
+// initialization kernel
+__kernel void initialize_gl_grid(__global float4* glPositionBuffer,
+                                 __global float4* glNormalBuffer,
+                                 __global float4* glTangentBuffer,
+                                 __global float4* clPositionBuffer,
+                                 int width)
+{
+    unsigned int x = get_global_id(0);
+    unsigned int y = get_global_id(1);
+
+    glPositionBuffer[y*width+x] = clPositionBuffer[y*width+x];
+    glNormalBuffer[y*width+x]   = (float4)(0.0f, 1.0f, 0.0f, 1.0f);
+    glTangentBuffer[y*width+x]  = (float4)(1.0f, 0.0f, 0.0f, 1.0f);
+
 }
 
 // create water drop

@@ -21,22 +21,28 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-__kernel void sinewave(__global float4* pos, unsigned int width, 
-                       unsigned int height, float time)
+// own
+#include "OpenGLOnlyApp.h"
+
+// std
+#include <string>
+#include <iostream>
+
+GlutApp* g_app;
+
+int main(int argc, char** argv)
 {
-    unsigned int x = get_global_id(0);
-    unsigned int y = get_global_id(1);
-  
-    // calculate uv coordinates
-    float u = x / (float) width;
-    float v = y / (float) height;
-    u = u*2.0f - 1.0f;
-    v = v*2.0f - 1.0f;
-  
-    // calculate simple sine wave pattern
-    float freq = 4.0f;
-    float w = sin(u*freq + time) * cos(v*freq + time) * 0.5f;
-  
-    // write output vertex
-    pos[y*width+x] = (float4)(u, 0.0f, v, 1.0f);
+    OpenGLOnlyApp app(argc, argv, "OpenGL-Warm-Up-App", 800, 600);
+    if(!app.init())
+    {
+        return 0;
+    }
+
+    std::string versionInfos = app.queryVersionInformations();
+    //std::string extensionInfos = app.queryExtensionInformations();
+
+    std::cout << versionInfos << std::endl;
+    //std::cout << extensionInfos << std::endl;
+
+    return app.run();
 }

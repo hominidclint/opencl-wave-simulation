@@ -99,20 +99,32 @@ private:
     GLSLProgram* m_glslProgram;
     GLuint m_vaoWaves;
 
+    // transformation matrices
     glm::mat4 m_modelM;
     glm::mat4 m_viewM;
     glm::mat4 m_projM;
+    glm::mat3 m_worldInvTransposeM;
 
+    // vbos
     GLuint m_positionVBO;
     GLuint m_normalVBO;
     GLuint m_tangentVBO;
     GLuint m_ibo;
+
+    // light, material and camera
+    glm::vec4 m_materialAmbient;
+    glm::vec4 m_materialDiffuse;
+    glm::vec4 m_materialSpecular; // w component for shininess
+
+    glm::vec3 m_lightDir;
+    glm::vec4 m_lightAmbient;
+    glm::vec4 m_lightDiffuse;
+    glm::vec4 m_lightSpecular;
     
     // animation
     float m_dt;
     Chronometer m_waveTrigger;
     bool m_pingpong;
-
     GPUWaves m_waves;
 
     // navigation

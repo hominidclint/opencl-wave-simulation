@@ -21,54 +21,30 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef GRID_GENERATOR_H
-#define GRID_GENERATOR_H
+// own
+#include "WaveApp.h"
 
-#include <vector>
+// std
+#include <string>
+#include <iostream>
 
-// glm
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform2.hpp>
+GlutApp* g_app;
 
-class GridGenerator
+#define SIZE 1024
+
+int main(int argc, char** argv)
 {
-public:
-    struct Vertex
+    WaveApp app(argc, argv, "CPU-Wave-Simulation", 800, 600, SIZE, SIZE);
+    if(!app.init())
     {
-        Vertex()
-        {}
+        return 0;
+    }
 
-        Vertex(const glm::vec3& position,
-               const glm::vec3& normal,
-               const glm::vec3& tangent,
-               const glm::vec2& uv)
-            : Position(position), Normal(normal), TangentU(tangent), TexC(uv)
-        {}
+    std::string versionInfos = app.queryVersionInformations();
+    //std::string extensionInfos = app.queryExtensionInformations();
 
-        Vertex(float px, float py, float pz, 
-               float nx, float ny, float nz,
-               float tx, float ty, float tz,
-               float u, float v)
-            : Position(px,py,pz), Normal(nx,ny,nz),
-              TangentU(tx, ty, tz), TexC(u,v)
-        {}
+    std::cout << versionInfos << std::endl;
+    //std::cout << extensionInfos << std::endl;
 
-        glm::vec3 Position;
-        glm::vec3 Normal;
-        glm::vec3 TangentU;
-        glm::vec2 TexC;
-    };
-
-    struct MeshData
-    {
-        std::vector<Vertex> vertices;
-        std::vector<unsigned int> indices;
-    };
-
-    // mxn grid in the xz-plane with m rows and n columns, centered
-    // at the origin with the specified width and depth.
-    void CreateGrid(float width, float depth, unsigned int m, unsigned int n, MeshData& meshData);
-};
-
-#endif // GRID_GENERATOR_H
+    return app.run();
+}

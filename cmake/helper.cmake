@@ -6,11 +6,8 @@
 # Created by Hannes Wuerfel
 
 function(configureSourceGroups)
-	SOURCE_GROUP(src REGULAR_EXPRESSION "c$|cpp$|ui$|qrc$")
-	SOURCE_GROUP(header REGULAR_EXPRESSION "hpp$|h$")
-	SOURCE_GROUP(cuda REGULAR_EXPRESSION "cu$")
+	SOURCE_GROUP(src REGULAR_EXPRESSION "c$|cpp$|hpp$|h$|ui$|qrc$")
 	SOURCE_GROUP(ocl REGULAR_EXPRESSION "cl$|ocl$")
-	SOURCE_GROUP(generated REGULAR_EXPRESSION "cxx$|ui_|ptx")
 	SOURCE_GROUP(fx REGULAR_EXPRESSION "fx$|glsl$|hlsl$|geom$|vert$|frag$")
 endfunction(configureSourceGroups)
 

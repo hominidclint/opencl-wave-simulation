@@ -2,15 +2,20 @@
 
 layout (location = 0) in vec4 vPos;
 layout (location = 1) in vec4 vNormal;
-layout (location = 2) in vec4 vTangentX;
+layout (location = 2) in vec4 vTangentX; // TODO
 
+out vec4 posW;
+out vec3 normalW;
+
+// transformation matrices
 uniform mat4 MVP;
-
-out vec4 color;
+uniform mat4 WorldMatrix;
+uniform mat3 WorldInvTranspose;
 
 void main()
 {
-	color = vec4(0.5, 0.5, 0.5, 1.0);
-	//gl_Position = MVP * vec4(vPos, 1.0);
 	gl_Position = MVP * vPos;
+
+	posW = WorldMatrix * vPos;
+	normalW = WorldInvTranspose * vNormal.xyz;
 }

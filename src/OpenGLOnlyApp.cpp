@@ -71,14 +71,14 @@ bool OpenGLOnlyApp::init()
 
 void OpenGLOnlyApp::initScene()
 {
-    if(!m_glslProgram->compileShaderFromFile("simple.vert", GLSLShader::VERTEX))
+    if(!m_glslProgram->compileShaderFromFile("test.vert", GLSLShader::VERTEX))
     {
         std::cerr << "Vertex shader failed to compile\n";
         std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
         exit(1);
     }
 
-    if(!m_glslProgram->compileShaderFromFile("simple.frag", GLSLShader::FRAGMENT))
+    if(!m_glslProgram->compileShaderFromFile("test.frag", GLSLShader::FRAGMENT))
     {
         std::cerr << "Fragment shader failed to compile\n";
         std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;

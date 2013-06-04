@@ -23,7 +23,9 @@
 
 cmake_minimum_required(VERSION 2.8.10.2)
 project(OGL_OCL_Interop)
-set(target OGLInteropOCL)
+set(target1 OpenCL-Wave-Simulation)
+set(target2 CPU-Wave-Simulation)
+set(target3 OpenGL-Warm-Up)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -38,53 +40,69 @@ find_package(GLUT REQUIRED)
 #include helper
 include(${CMAKE_MODULE_PATH}/helper.cmake)
 
-set(sources
-	src/main.cpp
+set(common_sources
 	src/GlutApp.h
 	src/GlutApp.cpp
-	src/WaveApp.h
-	src/WaveApp.cpp
-	src/GridGenerator.h
-	src/GridGenerator.cpp
+	src/CallbackHandler.h
 	src/MathUtils.h
 	src/MathUtils.cpp
-	src/CpuWaves.h
-	src/CpuWaves.cpp
-	src/GpuWaves.h
-	src/GpuWaves.cpp
-	src/ExampleApp.h
-	src/ExampleApp.cpp
 	src/GLSLProgram.h
 	src/GLSLProgram.cpp
-	src/OpenGLOnlyApp.h
-	src/OpenGLOnlyApp.cpp
-	src/CallbackHandler.h
-	src/OpenCLWaveSimulation.h
-	src/OpenCLWaveSimulation.cpp
 	src/Chronometer.hpp
 )
 
+set(sources_opencl_wave_simulation
+	src/main.cpp
+	src/GpuWaves.h
+	src/GpuWaves.cpp
+	src/OpenCLWaveSimulation.h
+	src/OpenCLWaveSimulation.cpp
+)
+
+set(sources_cpu_wave_simulation
+	src/cpu_wave_sim.cpp
+	src/WaveApp.h
+	src/WaveApp.cpp
+	src/CpuWaves.h
+	src/CpuWaves.cpp
+)
+
+set(sources_opengl_warm_up
+	src/ogl_warm_up.cpp
+	src/OpenGLOnlyApp.h
+	src/OpenGLOnlyApp.cpp
+)
+
 set(kernels
-	src/kernel/fxWaves.cl
 	src/kernel/WaveSimulation.cl
 )
 
-set(fx
-	src/fx/simple.vert
-	src/fx/simple.frag
-	src/fx/test.vert
-	src/fx/test.frag
+set(fx_opencl_wave_simulation
 	src/fx/render_waves.vert
 	src/fx/render_waves.frag
 )
 
-set(all_sources
-	${sources}
-	${kernels}
-	${fx}
+set(fx_cpu_wave_simulation
+	src/fx/simple.vert
+	src/fx/simple.frag
 )
 
-add_executable(${target} ${all_sources})
+set(fx_opengl_warm_up
+	src/fx/test.vert
+	src/fx/test.frag
+)
+
+set(fx
+	${fx_opencl_wave_simulation}
+	${fx_cpu_wave_simulation}
+	${fx_opengl_warm_up}
+)
+
+SOURCE_GROUP(common FILES ${common_sources})
+
+add_executable(${target1} ${common_sources} ${sources_opencl_wave_simulation} ${kernels} ${fx_opencl_wave_simulation})
+add_executable(${target2} ${common_sources} ${sources_cpu_wave_simulation} ${fx_cpu_wave_simulation})
+add_executable(${target3} ${common_sources} ${sources_opengl_warm_up} ${fx_opengl_warm_up})
 configureDebugPostfix("d")
 configureSourceGroups()
 include_directories(
@@ -95,18 +113,25 @@ include_directories(
 	${GLUT_INCLUDE_DIR}
 )
 
-target_link_libraries(${target}
+target_link_libraries(${target1}
 	${OPENCL_LIBRARY}
 	${OPENGL_LIBRARY}
 	${GLEW_LIBRARY}
 	${GLUT_LIBRARY}
 )
 
-install(TARGETS ${target} DESTINATION build)
+target_link_libraries(${target2}
+	${OPENGL_LIBRARY}
+	${GLEW_LIBRARY}
+	${GLUT_LIBRARY}
+)
+
+target_link_libraries(${target3}
+	${OPENGL_LIBRARY}
+	${GLEW_LIBRARY}
+	${GLUT_LIBRARY}
+)
+
+install(TARGETS ${target1} ${target2} ${target3} DESTINATION build)
 install(FILES ${kernels} DESTINATION build)
 install(FILES ${fx} DESTINATION build)
-
-# hack
-if(WIN32)
-	#install(FILES ${GLEW_INCLUDE_DIR}/../bin/glew32.dll DESTINATION bin)
-endif()

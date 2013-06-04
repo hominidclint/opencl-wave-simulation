@@ -1,43 +1,33 @@
+// Copyright (c) 2013, Hannes Würfel <hannes.wuerfel@student.hpi.uni-potsdam.de>
+// All rights reserved.
+
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//   * Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//   * Redistributions in binary form must reproduce the above copyright
+//     notice, this list of conditions and the following disclaimer in the
+//     documentation and/or other materials provided with the distribution.
+
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
 #version 400
 
 layout (location = 0) in vec3 vPos;
-layout (location = 1) in vec3 vNormal;
 
 uniform mat4 MVP;
-uniform mat3 NormalMatrix;
-uniform mat4 ModelViewMatrix;
-
-uniform vec3 LightPosition;
-uniform vec3 LightDir;
-uniform vec3 LightAmbient;
-uniform vec3 LightDiffuse;
-uniform vec3 LightSpecular;
-
-uniform vec3 Ka;
-uniform vec3 Kd;
-uniform vec4 Ks;
-
-out vec3 LightIntensity;
 
 void main()
 {
-	// Convert normal and position to eye coords
-	vec3 tnorm = normalize(NormalMatrix * vNormal);
-	vec4 eyeCoords = ModelViewMatrix * vec4(vPos, 1.0);
-
-	vec3 s = normalize(LightPosition - eyeCoords.xyz);
-	vec3 v = normalize(-eyeCoords.xyz);
-	
-	vec3 r = reflect(-s, tnorm);
-	vec3 ambient = LightAmbient * Ka;
-	float sDotN = max(dot(s,tnorm), 0.0);
-	vec3 diffuse = LightDiffuse * Kd * sDotN;
-	vec3 spec = vec3(0.0);
-	if(sDotN > 0.0)
-	{
-		spec = LightSpecular * Ks.xyz * pow(max(dot(r,v), 0.0), Ks.w);
-	}
-	LightIntensity = ambient + diffuse + spec;
-
 	gl_Position = MVP * vec4(vPos, 1.0);
 }

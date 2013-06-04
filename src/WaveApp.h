@@ -74,7 +74,6 @@ private:
     CPUWaves m_waves;
 
     GLuint m_posVBO;
-    GLuint m_normalVBO;
     GLuint m_indicesVBO;
 
     int m_gridWidth;

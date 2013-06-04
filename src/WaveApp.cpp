@@ -79,18 +79,14 @@ void WaveApp::buildWaveGrid()
 {
     m_waves.init(m_gridWidth, m_gridHeight, 1.0f, 0.03f, 3.25f, 0.4f);
 
-    GLuint vboHandles[3];
-    glGenBuffers(3, vboHandles);
+    GLuint vboHandles[2];
+    glGenBuffers(2, vboHandles);
     m_posVBO = vboHandles[0];
-    m_normalVBO = vboHandles[1];
-    m_indicesVBO = vboHandles[2];
+    m_indicesVBO = vboHandles[1];
 
     // create vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * m_gridWidth*m_gridHeight, reinterpret_cast<float*>(m_waves.getCurrentWaves()), GL_STREAM_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * m_gridWidth*m_gridHeight, reinterpret_cast<float*>(m_waves.getCurrentNormals()), GL_STREAM_DRAW);
 
     // create index buffer
     unsigned int* indices = new unsigned int[3 * m_waves.triangleCount()];
@@ -120,13 +116,9 @@ void WaveApp::buildWaveGrid()
     glBindVertexArray(m_vaoHandle);
 
     glEnableVertexAttribArray(0); // vPos;
-    glEnableVertexAttribArray(1); // vNormal
 
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO);
     glBindVertexArray(0);
@@ -152,7 +144,6 @@ void WaveApp::initScene()
 
     // bindAttribLocation or bindFragDataLocation here
     m_glslProgram->bindAttribLocation(0, "vPos");
-    m_glslProgram->bindAttribLocation(1, "vNormal");
     m_glslProgram->bindFragDataLocation(0, "FragColor");
 
     if(!m_glslProgram->link())
@@ -169,14 +160,6 @@ void WaveApp::initScene()
     m_modelM = glm::mat4(1.0f);
     m_viewM = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m_projM = glm::perspective(glm::degrees(0.25f * MathUtils::Pi), aspectRatio(), 1.0f, 2048.0f);
-
-    m_glslProgram->setUniform("LightDir", glm::vec3(0.57735f, -0.57735f, 0.57735f));
-    m_glslProgram->setUniform("LightAmbient", glm::vec3(0.2f, 0.2f, 0.2f));
-    m_glslProgram->setUniform("LightDiffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-    m_glslProgram->setUniform("LightSpecular", glm::vec3(0.5f, 0.5f, 0.5f));
-    m_glslProgram->setUniform("Ka", glm::vec3(0.137f, 0.42f, 0.556f));
-    m_glslProgram->setUniform("Kd", glm::vec3(0.137f, 0.42f, 0.556f));
-    m_glslProgram->setUniform("Ks", glm::vec4(0.8f, 0.8f, 0.8f, 96.0f));
 
     buildWaveGrid();
 }
@@ -201,9 +184,6 @@ void WaveApp::render()
 
     glm::mat4 mv = m_viewM * m_modelM;
     m_glslProgram->setUniform("MVP", m_projM * mv);
-    glm::mat3 modelInvTranspose = glm::transpose(glm::inverse(glm::mat3(mv)));
-    m_glslProgram->setUniform("NormalMatrix", modelInvTranspose);
-    m_glslProgram->setUniform("ModelViewMatrix", mv);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_vaoHandle);
@@ -239,13 +219,6 @@ void WaveApp::updateScene(double dt)
     for(unsigned int i = 0; i < m_waves.vertexCount(); ++i)
     {
         positionData[i] = m_waves[i];
-    }
-    glUnmapBuffer(GL_ARRAY_BUFFER);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
-    glm::vec3* normalData = reinterpret_cast<glm::vec3*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-    {
-        normalData[i] = m_waves.normal(i);
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);
 }

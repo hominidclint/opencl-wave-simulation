@@ -33,7 +33,7 @@ __kernel void compute_vertex_displacement(__global float4* prevGrid,
     unsigned int y = get_global_id(1);
 
     // this is the way to go => boundary checks!!!
-    if(x < get_global_size(0) && y < get_global_size(1))
+    if(x > 0 && x < get_global_size(0)-1 && y > 0 && y < get_global_size(1)-1)
     {
         prevGrid[y*width+x].y = k1 *  prevGrid[y*width+x].y     +
                                 k2 *  currGrid[y*width+x].y     +

@@ -39,8 +39,8 @@ OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, const std::str
       m_mouseBitMask(0),
       m_glslProgram(new GLSLProgram),
       m_theta(1.5f * MathUtils::Pi),
-      m_phi(0.1f * MathUtils::Pi),
-      m_radius(200.0f),
+      m_phi(0.1f),
+      m_radius(600.0f),
       m_prevX(0),
       m_prevY(0),
       m_pingpong(true)
@@ -129,7 +129,7 @@ void OpenCLWaveSimulation::initScene()
     m_materialDiffuse  = glm::vec4(0.137f, 0.42f, 0.556f, 1.0f);
     m_materialSpecular = glm::vec4(0.8f, 0.8f, 0.8f, 96.0f);
 
-    m_lightDir      = glm::vec3(0.57735f, -0.57735f, 0.57735f);
+    m_lightDir      = glm::vec3(0.0f, -1.0f, 0.1f);
     m_lightAmbient  = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
     m_lightDiffuse  = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
     m_lightSpecular = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);

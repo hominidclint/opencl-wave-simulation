@@ -48,12 +48,12 @@ public:
         glm::vec2 uv; // strided offset 24 (6 * 4)
     };
 
-    ExampleApp(int argc, char** argv, int width, int height, unsigned int meshWidth, unsigned int meshHeight);
+    ExampleApp(int argc, char** argv, const std::string& appName, int width, int height, unsigned int meshWidth, unsigned int meshHeight);
     ~ExampleApp();
 
     virtual bool init();
     virtual void render();
-    virtual void updateScene(float dt);
+    virtual void updateScene(double dt);
     virtual void onResize(int w, int h);
 
     virtual void onMouseEvent(int button, int state, int x, int y);

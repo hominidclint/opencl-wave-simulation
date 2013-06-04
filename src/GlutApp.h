@@ -27,18 +27,21 @@
 // ogl includes
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/freeglut.h>
-
-#include <string>
 
 #ifndef _WIN32
 #   include <GL/glxew.h>
 #endif
 
+// std
+#include <string>
+
+// own
+#include "Chronometer.hpp"
+
 class GlutApp
 {
 public:
-    GlutApp(int argc, char** argv, int width, int height);
+    GlutApp(int argc, char** argv, const std::string& appName, int width, int height);
     ~GlutApp();
 
     float aspectRatio();
@@ -49,7 +52,7 @@ public:
 
     virtual bool init();
     virtual void onResize(int w, int h) = 0;
-    virtual void updateScene(float dt) = 0;
+    virtual void updateScene(double dt) = 0;
     virtual void render() = 0;
 
     virtual void onMouseEvent(int button, int state, int x, int y) = 0;
@@ -58,12 +61,16 @@ public:
 
 protected:
     void initGlut(int argc, char** argv);
+    void measurePerformance();
 
     int m_width;
     int m_height;
 
     int m_argc;
     char** m_argv;
+    std::string m_appName;
+
+    Chronometer m_fpsChronometer;
 };
 
 #endif // GLUT_APP_H

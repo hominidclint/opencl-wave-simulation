@@ -24,10 +24,12 @@
 #include "GlutApp.h"
 #include <sstream>
 #include <iostream>
+#include <sstream>
 
-GlutApp::GlutApp(int argc, char** argv, int width, int height)
+GlutApp::GlutApp(int argc, char** argv, const std::string& appName, int width, int height)
     : m_argc(argc),
       m_argv(argv),
+      m_appName(appName),
       m_width(width),
       m_height(height)
 {
@@ -41,8 +43,6 @@ GlutApp::~GlutApp()
 void GlutApp::initGlut(int argc, char** argv)
 {
     glutInit(&argc, argv);
-    //glutInitContextVersion(4, 0);
-    glutInitContextFlags(GLUT_CORE_PROFILE | GLUT_DEBUG);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowPosition(glutGet(GLUT_SCREEN_WIDTH)/2 - m_width/2,
                            glutGet(GLUT_SCREEN_HEIGHT)/2 - m_height/2);
@@ -148,4 +148,27 @@ int GlutApp::checkGLError(const char* file, int line)
         glError = glGetError();
     }
     return returnValue;
+}
+
+void GlutApp::measurePerformance()
+{
+    static int frameCounter = 0;
+    static double elapsedTime = 0.0f;
+
+    ++frameCounter;
+
+    if((m_fpsChronometer.getPassedTimeSinceStart() - elapsedTime) >= 1.0)
+    {
+        double fps = static_cast<double>(frameCounter);
+        double millisecsPerFrame = 1000.0 / fps;
+
+        std::stringstream sstream;
+        sstream.precision(4);
+        sstream << m_appName << " | fps: " << fps << " | Time Per Frame: " << millisecsPerFrame << " (ms)";
+        
+        glutSetWindowTitle(sstream.str().c_str());
+
+        elapsedTime += 1.0;
+        frameCounter = 0;
+    }
 }

@@ -31,8 +31,8 @@
 
 #define SIZE 256
 
-WaveApp::WaveApp(int argc, char** argv, int width, int height)
-    : GlutApp(argc, argv, width, height),
+WaveApp::WaveApp(int argc, char** argv, const std::string& appName, int width, int height)
+    : GlutApp(argc, argv, appName, width, height),
     m_mouseBitMask(0),
     m_glslProgram(new GLSLProgram),
     m_theta(1.5f * MathUtils::Pi),
@@ -213,7 +213,7 @@ void WaveApp::render()
     glutSwapBuffers();
 }
 
-void WaveApp::updateScene(float dt)
+void WaveApp::updateScene(double dt)
 {
     // convert spherical to cartesian coordinates
     float x = m_radius * sinf(m_phi) * cosf(m_theta);

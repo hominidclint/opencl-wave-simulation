@@ -145,9 +145,9 @@ void CPUWaves::init(unsigned int m, unsigned int n, float dx, float dt, float sp
     }
 }
 
-void CPUWaves::update(float dt)
+void CPUWaves::update(double dt)
 {
-    static float t = 0;
+    static double t = 0;
 
     // accumulate time
     t += dt;

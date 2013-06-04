@@ -32,8 +32,8 @@
 
 #define VERTEX_SIZE 4
 
-OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, int width, int height, int gridWidth, int gridHeight)
-    : GlutApp(argc, argv, width, height),
+OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, const std::string& appName, int width, int height, int gridWidth, int gridHeight)
+    : GlutApp(argc, argv, appName, width, height),
       m_gridWidth(gridWidth),
       m_gridHeight(gridHeight),
       m_mouseBitMask(0),
@@ -79,7 +79,8 @@ bool OpenCLWaveSimulation::init()
 
     initScene();
     initOCL();
-    m_timer.start();
+    m_waveTrigger.start();
+    m_fpsChronometer.start();
 
     return true;
 }
@@ -305,9 +306,8 @@ void OpenCLWaveSimulation::render()
 {
     checkGLError(__FILE__,__LINE__);
 
-    static float anim = 0;
-    anim += 0.01f;
-    updateScene(anim);
+    measurePerformance();
+    updateScene(m_fpsChronometer.getPassedTimeSinceStart());
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -318,7 +318,7 @@ void OpenCLWaveSimulation::render()
     glutSwapBuffers();    
 }
 
-void OpenCLWaveSimulation::updateScene(float dt)
+void OpenCLWaveSimulation::updateScene(double dt)
 {
     // convert spherical to cartesian coordinates
     float x = m_radius * sinf(m_phi) * cosf(m_theta);
@@ -335,11 +335,11 @@ void OpenCLWaveSimulation::updateScene(float dt)
     m_glslProgram->setUniform("MVP", m_projM * mv);
     glFinish();
 
-    if(m_timer.getPassedTimeSinceStart() >= 0.4f) //0.4 seconds
+    if(m_waveTrigger.getPassedTimeSinceStart() >= 0.05) // 50ms
     {
         disturbGrid();
-        m_timer.stop();
-        m_timer.start();
+        m_waveTrigger.stop();
+        m_waveTrigger.start();
     }
 
     computeVertexDisplacement();
@@ -392,8 +392,16 @@ void OpenCLWaveSimulation::disturbGrid()
     int j = 5 + rand() % (m_waves.columnCount()-10);
     float r = MathUtils::randF(1.0f, 2.0f);
 
-    // computeVertex displacement swapped the buffers before
-    clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
+    if(m_pingpong)
+    {
+        // computeVertex displacement swapped the buffers before
+        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
+    }
+    else
+    {
+        clSetKernelArg(m_disturbKernel, 0, sizeof(cl_mem), (void*)&m_clPing);
+    }
+    
     clSetKernelArg(m_disturbKernel, 1, sizeof(unsigned int), &i);
     clSetKernelArg(m_disturbKernel, 2, sizeof(unsigned int), &j);
     clSetKernelArg(m_disturbKernel, 3, sizeof(int), &m_gridWidth);

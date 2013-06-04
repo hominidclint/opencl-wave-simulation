@@ -58,7 +58,7 @@ public:
     inline const glm::vec3& tangentX(int i) const { return m_tangentX[i]; }
 
     void init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping);
-    void update(float dt);
+    void update(double dt);
     void disturb(unsigned int i, unsigned int j, float magnitude);
 
 private:

@@ -27,8 +27,8 @@
 #include <iostream>
 
 
-OpenGLOnlyApp::OpenGLOnlyApp(int argc, char** argv, int width, int height)
-    : GlutApp(argc, argv, width, height),
+OpenGLOnlyApp::OpenGLOnlyApp(int argc, char** argv, const std::string& appName, int width, int height)
+    : GlutApp(argc, argv, appName, width, height),
       m_mouseBitMask(0),
       m_rotateX(0.0f),
       m_rotateY(0.0f),
@@ -215,7 +215,7 @@ void OpenGLOnlyApp::render()
     glutSwapBuffers();
 }
 
-void OpenGLOnlyApp::updateScene(float dt)
+void OpenGLOnlyApp::updateScene(double dt)
 {
 }
 

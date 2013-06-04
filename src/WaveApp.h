@@ -47,12 +47,12 @@ public:
         //glm::vec2 uv; // strided offset 24 (6 * 4)
     };
 
-    WaveApp(int argc, char** argv, int width, int height);
+    WaveApp(int argc, char** argv, const std::string& appName, int width, int height);
     ~WaveApp();
 
     virtual bool init();
     virtual void render();
-    virtual void updateScene(float dt);
+    virtual void updateScene(double dt);
     virtual void onResize(int w, int h);
 
     virtual void onMouseEvent(int button, int state, int x, int y);

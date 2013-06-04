@@ -29,8 +29,8 @@
 
 using namespace GLSLShader;
 
-ExampleApp::ExampleApp(int argc, char** argv, int width, int height, unsigned int meshWidth, unsigned int meshHeight)
-    : GlutApp(argc, argv, width, height),
+ExampleApp::ExampleApp(int argc, char** argv, const std::string& appName, int width, int height, unsigned int meshWidth, unsigned int meshHeight)
+    : GlutApp(argc, argv, appName, width, height),
       m_meshWidth(meshWidth),
       m_meshHeight(meshHeight),
       m_anim(0.0f),
@@ -267,7 +267,7 @@ void ExampleApp::onResize(int w, int h)
     glutPostRedisplay();
 }
 
-void ExampleApp::updateScene(float dt)
+void ExampleApp::updateScene(double dt)
 {
 }
 

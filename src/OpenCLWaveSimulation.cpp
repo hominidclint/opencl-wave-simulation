@@ -103,6 +103,8 @@ void OpenCLWaveSimulation::initScene()
 
     // bindAttribLocation or bindFragDataLocation here
     m_glslProgram->bindAttribLocation(0, "vPos");
+    m_glslProgram->bindAttribLocation(1, "vNormal");
+    m_glslProgram->bindAttribLocation(2, "vTangent");
     m_glslProgram->bindFragDataLocation(0, "FragColor");
 
     if(!m_glslProgram->link())
@@ -128,13 +130,21 @@ void OpenCLWaveSimulation::buildWaveGrid()
     assert(m_gridWidth == m_gridHeight);
     m_waves.init(m_gridWidth, m_gridHeight, 1.0f, 0.03f, 3.25f, 0.4f); // #TODO
 
-    GLuint vboHandles[2];
-    glGenBuffers(2, vboHandles);
-    m_vbo = vboHandles[0];
-    m_ibo = vboHandles[1];
+    GLuint vboHandles[4];
+    glGenBuffers(4, vboHandles);
+    m_positionVBO = vboHandles[0];
+    m_normalVBO = vboHandles[1];
+    m_tangentVBO = vboHandles[2];
+    m_ibo = vboHandles[3];
 
     // create vertex buffers
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_positionVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * VERTEX_SIZE * m_gridWidth*m_gridHeight, 0, GL_STREAM_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * VERTEX_SIZE * m_gridWidth*m_gridHeight, 0, GL_STREAM_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_tangentVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * VERTEX_SIZE * m_gridWidth*m_gridHeight, 0, GL_STREAM_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
@@ -143,9 +153,15 @@ void OpenCLWaveSimulation::buildWaveGrid()
     glGenVertexArrays(1, &m_vaoWaves);
 
     glBindVertexArray(m_vaoWaves);
-    glEnableVertexAttribArray(0); // vPos; #TODO color, normals etc
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glEnableVertexAttribArray(0); // vPos
+    glEnableVertexAttribArray(1); // vNormal
+    glEnableVertexAttribArray(2); // vTangentX
+    glBindBuffer(GL_ARRAY_BUFFER, m_positionVBO);
     glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
+    glVertexAttribPointer(1, VERTEX_SIZE, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+    glBindBuffer(GL_ARRAY_BUFFER, m_tangentVBO);
+    glVertexAttribPointer(2, VERTEX_SIZE, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
     glBindVertexArray(0);
 }
@@ -187,10 +203,22 @@ void OpenCLWaveSimulation::initOCL()
 
     // create buffers
     int errCode;
-    m_clInteropBuffer = clCreateFromGLBuffer(m_context, CL_MEM_WRITE_ONLY, m_vbo, &errCode);
+    m_clPositionInteropBuffer = clCreateFromGLBuffer(m_context, CL_MEM_WRITE_ONLY, m_positionVBO, &errCode);
     if(errCode != CL_SUCCESS)
     {
-        std::cerr << "Failed creating cl_mem from gl buffer\n";
+        std::cerr << "Failed creating cl_mem position buffer from gl buffer\n";
+    }
+
+    m_clNormalInteropBuffer = clCreateFromGLBuffer(m_context, CL_MEM_WRITE_ONLY, m_normalVBO, &errCode);
+    if(errCode != CL_SUCCESS)
+    {
+        std::cerr << "Failed creating cl_mem normal buffer from gl buffer\n";
+    }
+
+    m_clTangentInteropBuffer = clCreateFromGLBuffer(m_context, CL_MEM_WRITE_ONLY, m_tangentVBO, &errCode);
+    if(errCode != CL_SUCCESS)
+    {
+        std::cerr << "Failed creating cl_mem tangent buffer from gl buffer\n";
     }
 
     m_clPing = clCreateBuffer(m_context,
@@ -269,14 +297,26 @@ void OpenCLWaveSimulation::initGLBuffer()
 {
     clFinish(m_queue);
     glFinish();
-    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clPositionInteropBuffer, 0, 0, 0) != CL_SUCCESS)
     {
-        std::cerr << "Failed to acquire gl buffer\n";
+        std::cerr << "Failed to acquire gl position buffer\n";
     }
 
-    clSetKernelArg(m_glGridInitKernel, 0, sizeof(cl_mem), (void*)&m_clInteropBuffer);
-    clSetKernelArg(m_glGridInitKernel, 1, sizeof(cl_mem), (void*)&m_clPing);
-    clSetKernelArg(m_glGridInitKernel, 2, sizeof(int), &m_gridWidth);
+    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clNormalInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to acquire gl normal buffer\n";
+    }
+
+    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clTangentInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to acquire gl tangent buffer\n";
+    }
+
+    clSetKernelArg(m_glGridInitKernel, 0, sizeof(cl_mem), (void*)&m_clPositionInteropBuffer);
+    clSetKernelArg(m_glGridInitKernel, 1, sizeof(cl_mem), (void*)&m_clNormalInteropBuffer);
+    clSetKernelArg(m_glGridInitKernel, 2, sizeof(cl_mem), (void*)&m_clTangentInteropBuffer);
+    clSetKernelArg(m_glGridInitKernel, 3, sizeof(cl_mem), (void*)&m_clPing);
+    clSetKernelArg(m_glGridInitKernel, 4, sizeof(int), &m_gridWidth);
 
     // compute vertex displacement
     if(clEnqueueNDRangeKernel(m_queue, m_glGridInitKernel, 2, NULL, m_global, NULL, 0, 0, 0) != CL_SUCCESS)
@@ -285,9 +325,19 @@ void OpenCLWaveSimulation::initGLBuffer()
     }
 
 
-    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clPositionInteropBuffer, 0, 0, 0) != CL_SUCCESS)
     {
-        std::cerr << "Failed to release gl buffers\n";
+        std::cerr << "Failed to release gl position buffers\n";
+    }
+
+    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clNormalInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to release gl normal buffers\n";
+    }
+
+    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clTangentInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to release gl tangent buffers\n";
     }
     clFinish(m_queue);
 }
@@ -343,13 +393,14 @@ void OpenCLWaveSimulation::updateScene(double dt)
     }
 
     computeVertexDisplacement();
+    void computeFiniteDifferenceScheme();
 }
 
 void OpenCLWaveSimulation::computeVertexDisplacement()
 {
-    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clPositionInteropBuffer, 0, 0, 0) != CL_SUCCESS)
     {
-        std::cerr << "Failed to acquire gl buffer\n";
+        std::cerr << "Failed to acquire gl position buffer\n";
     }
 
     if(m_pingpong)
@@ -363,7 +414,7 @@ void OpenCLWaveSimulation::computeVertexDisplacement()
         clSetKernelArg(m_vertexDisplacementKernel, 1, sizeof(cl_mem), (void*)&m_clPing);
     }
 
-    clSetKernelArg(m_vertexDisplacementKernel, 2, sizeof(cl_mem), (void*)&m_clInteropBuffer);
+    clSetKernelArg(m_vertexDisplacementKernel, 2, sizeof(cl_mem), (void*)&m_clPositionInteropBuffer);
     clSetKernelArg(m_vertexDisplacementKernel, 3, sizeof(int), &m_gridWidth);
     clSetKernelArg(m_vertexDisplacementKernel, 4, sizeof(float), m_waves.k1());
     clSetKernelArg(m_vertexDisplacementKernel, 5, sizeof(float), m_waves.k2());
@@ -376,14 +427,59 @@ void OpenCLWaveSimulation::computeVertexDisplacement()
     }
 
 
-    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clPositionInteropBuffer, 0, 0, 0) != CL_SUCCESS)
     {
-        std::cerr << "Failed to release gl buffers\n";
+        std::cerr << "Failed to release gl position buffers\n";
     }
     clFinish(m_queue);
 
     // swap buffers
     m_pingpong = !m_pingpong;
+}
+
+void OpenCLWaveSimulation::computeFiniteDifferenceScheme()
+{
+    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clNormalInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to acquire gl normal buffer\n";
+    }
+
+    if(clEnqueueAcquireGLObjects(m_queue, 1, &m_clTangentInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to acquire gl tangent buffer\n";
+    }
+
+    if(m_pingpong)
+    {
+        clSetKernelArg(m_finiteDifferenceSchemeKernel, 0, sizeof(cl_mem), (void*)&m_clPong);
+    }
+    else
+    {
+        clSetKernelArg(m_finiteDifferenceSchemeKernel, 0, sizeof(cl_mem), (void*)&m_clPing);
+    }
+
+    clSetKernelArg(m_finiteDifferenceSchemeKernel, 1, sizeof(cl_mem), (void*)&m_clNormalInteropBuffer);
+    clSetKernelArg(m_finiteDifferenceSchemeKernel, 2, sizeof(cl_mem), (void*)&m_clTangentInteropBuffer);
+    clSetKernelArg(m_finiteDifferenceSchemeKernel, 3, sizeof(int), &m_gridWidth);
+    clSetKernelArg(m_finiteDifferenceSchemeKernel, 4, sizeof(float), m_waves.spatialStep());
+
+
+    if(clEnqueueNDRangeKernel(m_queue, m_finiteDifferenceSchemeKernel, 2, NULL, m_global, NULL, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Finite Difference Scheme Kernel Execution failed\n";
+    }
+
+
+    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clNormalInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to release gl normal buffers\n";
+    }
+
+    if(clEnqueueReleaseGLObjects(m_queue, 1, &m_clTangentInteropBuffer, 0, 0, 0) != CL_SUCCESS)
+    {
+        std::cerr << "Failed to release gl tangent buffers\n";
+    }
+    clFinish(m_queue);
 }
 
 void OpenCLWaveSimulation::disturbGrid()
@@ -407,9 +503,7 @@ void OpenCLWaveSimulation::disturbGrid()
     clSetKernelArg(m_disturbKernel, 3, sizeof(int), &m_gridWidth);
     clSetKernelArg(m_disturbKernel, 4, sizeof(float), &r);
 
-
-    // disturb grid
-    size_t global[] = {1, 1}; // hack
+    size_t global[] = {1, 1};
     if(clEnqueueNDRangeKernel(m_queue, m_disturbKernel, 2, NULL, global, NULL, 0, 0, 0) != CL_SUCCESS)
     {
         std::cerr << "Disturb Grid Kernel Execution failed\n";

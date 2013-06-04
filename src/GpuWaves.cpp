@@ -34,8 +34,6 @@ GPUWaves::GPUWaves()
     m_timeStep(0.0f),
     m_spatialStep(0.0f),
     m_vertices(0),
-    m_normals(0),
-    m_tangentsX(0),
     m_indices(0)
 {
 }
@@ -43,8 +41,6 @@ GPUWaves::GPUWaves()
 GPUWaves::~GPUWaves()
 {
     delete[] m_vertices;
-    delete[] m_normals;
-    delete[] m_tangentsX;
     delete[] m_indices;
 }
 
@@ -94,6 +90,11 @@ const float* GPUWaves::k3() const
     return &m_k3;
 }
 
+const float* GPUWaves::spatialStep() const
+{
+    return &m_spatialStep;
+}
+
 void GPUWaves::init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping)
 {
     m_nRows = m;
@@ -111,14 +112,9 @@ void GPUWaves::init(unsigned int m, unsigned int n, float dx, float dt, float sp
     m_k2     = (4.0f-8.0f*e) / d;
     m_k3     = (2.0f*e) / d;
 
-    // in case init() is called again
     delete[] m_vertices;
-    delete[] m_normals;
-    delete[] m_tangentsX;
 
     m_vertices  = new glm::vec4[m*n];
-    m_normals   = new glm::vec3[m*n];
-    m_tangentsX = new glm::vec3[m*n];
 
     float halfWidth = (n-1)*dx*0.5f;
     float halfDepth = (m-1)*dx*0.5f;
@@ -130,9 +126,7 @@ void GPUWaves::init(unsigned int m, unsigned int n, float dx, float dt, float sp
         {
             float x = -halfWidth + j * dx;
 
-            m_vertices[i*n+j] = glm::vec4(x, 0.0f, z, 1.0f);
-            m_normals[i*n+j]      = glm::vec3(0.0f , 1.0f, 0.0f);
-            m_tangentsX[i*n+j]     = glm::vec3(1.0f, 0.0f, 0.0f);
+            m_vertices[i*n+j]  = glm::vec4(x, 0.0f, z, 1.0f);
         }
     }
 

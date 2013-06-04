@@ -64,7 +64,7 @@ protected:
     void buildWaveGrid();
 
     void computeVertexDisplacement();
-    //void computeFiniteDifferenceScheme(); // TODO
+    void computeFiniteDifferenceScheme();
     void disturbGrid();
     void initGLBuffer();
 
@@ -81,7 +81,9 @@ private:
     cl_kernel m_disturbKernel;
     cl_kernel m_glGridInitKernel;
 
-    cl_mem m_clInteropBuffer;
+    cl_mem m_clPositionInteropBuffer;
+    cl_mem m_clNormalInteropBuffer;
+    cl_mem m_clTangentInteropBuffer;
     cl_mem m_clPing;
     cl_mem m_clPong;
 
@@ -101,7 +103,9 @@ private:
     glm::mat4 m_viewM;
     glm::mat4 m_projM;
 
-    GLuint m_vbo;
+    GLuint m_positionVBO;
+    GLuint m_normalVBO;
+    GLuint m_tangentVBO;
     GLuint m_ibo;
     
     // animation

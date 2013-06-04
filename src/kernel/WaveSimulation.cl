@@ -21,6 +21,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+// wave propagation over grid
 __kernel void compute_vertex_displacement(__global float4* prevGrid,
                                           __global float4* currGrid,
                                           __global float4* glBuffer,
@@ -32,7 +33,6 @@ __kernel void compute_vertex_displacement(__global float4* prevGrid,
     unsigned int x = get_global_id(0);
     unsigned int y = get_global_id(1);
 
-    // this is the way to go => boundary checks!!!
     if(x > 0 && x < get_global_size(0)-1 && y > 0 && y < get_global_size(1)-1)
     {
         prevGrid[y*width+x].y = k1 *  prevGrid[y*width+x].y     +
@@ -47,42 +47,50 @@ __kernel void compute_vertex_displacement(__global float4* prevGrid,
 }
 
 // initialization kernel
-__kernel void initialize_gl_grid(__global float4* glBuffer,
-                                 __global float4* clBuffer,
+__kernel void initialize_gl_grid(__global float4* glPositionBuffer,
+                                 __global float4* glNormalBuffer,
+                                 __global float4* glTangentBuffer,
+                                 __global float4* clPositionBuffer,
                                  int width)
 {
     unsigned int x = get_global_id(0);
     unsigned int y = get_global_id(1);
 
-    glBuffer[y*width+x] = clBuffer[y*width+x];
+    glPositionBuffer[y*width+x] = clPositionBuffer[y*width+x];
+    glNormalBuffer[y*width+x]   = (float4)(0.0f, 1.0f, 0.0f, 1.0f);
+    glTangentBuffer[y*width+x]  = (float4)(1.0f, 0.0f, 0.0f, 1.0f);
+
 }
 
-__kernel void compute_finite_difference_scheme(__global float3* currGrid,
-                                               __global float3* normals,
-                                               __global float3* tangents,
+__kernel void compute_finite_difference_scheme(__global float4* currGrid,
+                                               __global float4* glNormalBuffer,
+                                               __global float4* glTangentBuffer,
                                                int width,
                                                float spatialStep)
 {
     unsigned int x = get_global_id(0);
     unsigned int y = get_global_id(1);
 
-    float l = currGrid[y*width+(x-1)].y;
-    float r = currGrid[y*width+(x+1)].y;
-    float t = currGrid[(y-1)*width+x].y;
-    float b = currGrid[(y+1)*width+x].y;
+    if(x > 0 && x < get_global_size(0)-1 && y > 0 && y < get_global_size(1)-1)
+    {
+        float l = currGrid[y*width+(x-1)].y;
+        float r = currGrid[y*width+(x+1)].y;
+        float t = currGrid[(y-1)*width+x].y;
+        float b = currGrid[(y+1)*width+x].y;
 
-    float3 estimatedNormal  = (float3)(l-r, 2.0f*spatialStep, b-t);
-    float3 estimatedTangent = (float3)(2.0f*spatialStep, r-l, 0.0f);
+        float4 estimatedNormal  = (float4)(l-r, 2.0f*spatialStep, b-t, 1.0f);
+        float4 estimatedTangent = (float4)(2.0f*spatialStep, r-l, 0.0f, 1.0f);
 
-    normals[y*width+x]  = normalize(estimatedNormal);
-    tangents[y*width+x] = normalize(estimatedTangent);
+        glNormalBuffer[y*width+x]  = normalize(estimatedNormal);
+        glTangentBuffer[y*width+x] = normalize(estimatedTangent);
+    }
 }
 
-// works
+// create water drop
 __kernel void disturb_grid(__global float3* currGrid,
                            unsigned int i,
                            unsigned int j,
-                           int width, // assumes grid is quadratic
+                           int width,
                            float magnitude)
 {
     float halfMagnitude = 0.5f * magnitude;

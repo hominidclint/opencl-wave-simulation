@@ -51,6 +51,7 @@ public:
     const float* k1() const;
     const float* k2() const;
     const float* k3() const;
+    const float* spatialStep() const;
 
     void init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping);
 
@@ -73,8 +74,6 @@ private:
     float m_spatialStep;
 
     glm::vec4* m_vertices;
-    glm::vec3* m_normals;
-    glm::vec3* m_tangentsX;
     unsigned int* m_indices;
 };
 

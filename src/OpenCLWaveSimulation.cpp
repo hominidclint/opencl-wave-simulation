@@ -556,9 +556,22 @@ void OpenCLWaveSimulation::onMouseEvent(int button, int state, int x, int y)
 
 void OpenCLWaveSimulation::onKeyboardEvent(unsigned char key, int x, int y)
 {
+    static bool state = true;
     if(key == 27)
     {
         exit(0);
+    }
+    else if(key == 'w')
+    {
+        if(state)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        else
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        state = !state;
     }
 }
 

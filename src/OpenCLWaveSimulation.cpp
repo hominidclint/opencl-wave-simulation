@@ -51,8 +51,7 @@ OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, const std::str
 
 OpenCLWaveSimulation::~OpenCLWaveSimulation()
 {
-    // TODO
-    delete m_glslProgram;
+    cleanup();
 };
 
 bool OpenCLWaveSimulation::init()
@@ -344,6 +343,7 @@ void OpenCLWaveSimulation::initGLBuffer()
     clSetKernelArg(m_glGridInitKernel, 3, sizeof(cl_mem), (void*)&m_clPing);
     clSetKernelArg(m_glGridInitKernel, 4, sizeof(int), &m_gridWidth);
 
+    
     if(clEnqueueNDRangeKernel(m_queue, m_glGridInitKernel, 2, NULL, m_global, NULL, 0, 0, 0) != CL_SUCCESS)
     {
         std::cerr << "OpenGL Grid Init Kernel Execution failed\n";
@@ -598,4 +598,94 @@ void OpenCLWaveSimulation::onMotionEvent(int x, int y)
 
     m_prevX = x;
     m_prevY = y;
+}
+
+void OpenCLWaveSimulation::cleanup()
+{
+    if(m_queue != 0)
+    {
+        clReleaseCommandQueue(m_queue);
+    }
+
+    if(m_vertexDisplacementKernel != 0)
+    {
+        clReleaseKernel(m_vertexDisplacementKernel);
+    }
+
+    if(m_finiteDifferenceSchemeKernel != 0)
+    {
+        clReleaseKernel(m_finiteDifferenceSchemeKernel);
+    }
+
+    if(m_disturbKernel != 0)
+    {
+        clReleaseKernel(m_disturbKernel);
+    }
+
+    if(m_glGridInitKernel != 0)
+    {
+        clReleaseKernel(m_glGridInitKernel);
+    }
+
+    if(m_program != 0)
+    {
+        clReleaseProgram(m_program);
+    }
+
+    if(m_context != 0)
+    {
+        clReleaseContext(m_context);
+    }
+
+    if(m_clPing)
+    {
+        clReleaseMemObject(m_clPing);
+    }
+
+    if(m_clPong)
+    {
+        clReleaseMemObject(m_clPong);
+    }
+
+    if(m_clPositionInteropBuffer)
+    {
+        clReleaseMemObject(m_clPositionInteropBuffer);
+    }
+
+    if(m_clNormalInteropBuffer)
+    {
+        clReleaseMemObject(m_clNormalInteropBuffer);
+    }
+
+    if(m_clTangentInteropBuffer)
+    {
+        clReleaseMemObject(m_clTangentInteropBuffer);
+    }
+
+    // after releasing the ocl references, one can delete the corresponding ogl objects
+    if(m_positionVBO != 0)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, m_positionVBO);
+        glDeleteBuffers(1, &m_positionVBO);
+    }
+    
+    if(m_normalVBO)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
+        glDeleteBuffers(1, &m_normalVBO);
+    }
+
+    if(m_tangentVBO)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, m_tangentVBO);
+        glDeleteBuffers(1, &m_tangentVBO);
+    }
+
+    if(m_ibo)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        glDeleteBuffers(1, &m_ibo);
+    }
+
+    delete m_glslProgram;
 }

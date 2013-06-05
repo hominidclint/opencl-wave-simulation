@@ -87,7 +87,7 @@ __kernel void initialize_gl_grid(__global float4* glPositionBuffer,
 }
 
 // create water drop
-__kernel void disturb_grid(__global float3* currGrid,
+__kernel void disturb_grid(__global float4* currGrid,
                            unsigned int i,
                            unsigned int j,
                            int width,

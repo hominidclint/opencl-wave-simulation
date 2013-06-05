@@ -60,6 +60,7 @@ public:
 protected:
     void initScene();
     void initOCL();
+    void cleanup();
 
     void buildWaveGrid();
 

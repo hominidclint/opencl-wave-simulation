@@ -121,10 +121,10 @@ void CPUWaves::init(unsigned int m, unsigned int n, float dx, float dt, float sp
     delete[] m_normals;
     delete[] m_tangentX;
 
-    m_prevSolution = new glm::vec3[m*n];
-    m_currSolution = new glm::vec3[m*n];
-    m_normals      = new glm::vec3[m*n];
-    m_tangentX     = new glm::vec3[m*n];
+    m_prevSolution = new glm::vec4[m*n];
+    m_currSolution = new glm::vec4[m*n];
+    m_normals      = new glm::vec4[m*n];
+    m_tangentX     = new glm::vec4[m*n];
 
     // create grid vertices in system memory (as the highfield)
     float halfWidth = (n-1)*dx*0.5f;
@@ -137,10 +137,10 @@ void CPUWaves::init(unsigned int m, unsigned int n, float dx, float dt, float sp
         {
             float x = -halfWidth + j * dx;
 
-            m_prevSolution[i*n+j] = glm::vec3(x, 0.0f, z);
-            m_currSolution[i*n+j] = glm::vec3(x, 0.0f, z);
-            m_normals[i*n+j]      = glm::vec3(0.0f , 1.0f, 0.0f);
-            m_tangentX[i*n+j]     = glm::vec3(1.0f, 0.0f, 0.0f);
+            m_prevSolution[i*n+j] = glm::vec4(x, 0.0f, z, 1.0f);
+            m_currSolution[i*n+j] = glm::vec4(x, 0.0f, z, 1.0f);
+            m_normals[i*n+j]      = glm::vec4(0.0f , 1.0f, 0.0f, 1.0f);
+            m_tangentX[i*n+j]     = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
         }
     }
 }
@@ -202,7 +202,7 @@ void CPUWaves::update(double dt)
 
                 m_normals[i*m_nCols+j] = glm::normalize(m_normals[i*m_nCols+j]);
 
-                m_tangentX[i*m_nCols+j] = glm::vec3(2.0f*m_spatialStep, r-l, 0.0f);
+                m_tangentX[i*m_nCols+j] = glm::vec4(2.0f*m_spatialStep, r-l, 0.0f, 1.0f);
                 m_tangentX[i*m_nCols+j] = glm::normalize(m_tangentX[i*m_nCols+j]);
             }
         }

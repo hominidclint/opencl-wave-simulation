@@ -123,7 +123,6 @@ private:
     glm::vec4 m_lightSpecular;
     
     // animation
-    float m_dt;
     Chronometer m_waveTrigger;
     bool m_pingpong;
     GPUWaves m_waves;

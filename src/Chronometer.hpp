@@ -84,7 +84,7 @@ public:
     }
 
     /**
-    *   @Return Getter for the passed Time.
+    *   @Return Getter for the passed Time since start.
     */
     inline long double getPassedTimeSinceStart()
     {

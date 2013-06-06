@@ -27,6 +27,7 @@
 #include "GlutApp.h"
 #include "GLSLProgram.h"
 #include "CpuWaves.h"
+#include "Chronometer.hpp"
 
 #include <string>
 
@@ -61,6 +62,7 @@ private:
     glm::mat4 m_modelM;
     glm::mat4 m_viewM;
     glm::mat4 m_projM;
+    glm::mat3 m_worldInvTransposeM;
 
     // navigation
     float m_theta;
@@ -70,10 +72,22 @@ private:
     int m_prevX;
     int m_prevY;
     int m_mouseBitMask;
+    Chronometer m_waveTrigger;
 
     CPUWaves m_waves;
 
+    // light, material and camera
+    glm::vec4 m_materialAmbient;
+    glm::vec4 m_materialDiffuse;
+    glm::vec4 m_materialSpecular; // w component for shininess
+
+    glm::vec3 m_lightDir;
+    glm::vec4 m_lightAmbient;
+    glm::vec4 m_lightDiffuse;
+    glm::vec4 m_lightSpecular;
+
     GLuint m_posVBO;
+    GLuint m_normalVBO;
     GLuint m_indicesVBO;
 
     int m_gridWidth;

@@ -42,10 +42,12 @@ __kernel void compute_vertex_displacement(__global float4* prevGrid,
                                       currGrid[y*width+(x+1)].y +
                                       currGrid[y*width+(x-1)].y);
 
+
         glBuffer[y*width+x] = prevGrid[y*width+x];
     }
 }
 
+// compute normals for shading and tangents for texture coords
 __kernel void compute_finite_difference_scheme(__global float4* currGrid,
                                                __global float4* glNormalBuffer,
                                                __global float4* glTangentBuffer,

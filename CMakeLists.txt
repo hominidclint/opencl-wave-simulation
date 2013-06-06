@@ -77,14 +77,9 @@ set(kernels
 	src/kernel/WaveSimulation.cl
 )
 
-set(fx_opencl_wave_simulation
+set(fx_wave_simulation
 	src/fx/render_waves.vert
 	src/fx/render_waves.frag
-)
-
-set(fx_cpu_wave_simulation
-	src/fx/simple.vert
-	src/fx/simple.frag
 )
 
 set(fx_opengl_warm_up
@@ -93,15 +88,14 @@ set(fx_opengl_warm_up
 )
 
 set(fx
-	${fx_opencl_wave_simulation}
-	${fx_cpu_wave_simulation}
+	${fx_wave_simulation}
 	${fx_opengl_warm_up}
 )
 
 SOURCE_GROUP(common FILES ${common_sources})
 
-add_executable(${target1} ${common_sources} ${sources_opencl_wave_simulation} ${kernels} ${fx_opencl_wave_simulation})
-add_executable(${target2} ${common_sources} ${sources_cpu_wave_simulation} ${fx_cpu_wave_simulation})
+add_executable(${target1} ${common_sources} ${sources_opencl_wave_simulation} ${kernels} ${fx_wave_simulation})
+add_executable(${target2} ${common_sources} ${sources_cpu_wave_simulation} ${fx_wave_simulation})
 add_executable(${target3} ${common_sources} ${sources_opengl_warm_up} ${fx_opengl_warm_up})
 configureDebugPostfix("d")
 configureSourceGroups()

@@ -35,7 +35,7 @@ WaveApp::WaveApp(int argc, char** argv, const std::string& appName, int width, i
     m_glslProgram(new GLSLProgram),
     m_theta(1.5f * MathUtils::Pi),
     m_phi(0.1f * MathUtils::Pi),
-    m_radius(200.0f),
+    m_radius(600.0f),
     m_prevX(0),
     m_prevY(0),
     m_gridWidth(gridWidth),
@@ -79,14 +79,19 @@ void WaveApp::buildWaveGrid()
 {
     m_waves.init(m_gridWidth, m_gridHeight, 1.0f, 0.03f, 3.25f, 0.4f);
 
-    GLuint vboHandles[2];
-    glGenBuffers(2, vboHandles);
+    GLuint vboHandles[3];
+    glGenBuffers(3, vboHandles);
     m_posVBO = vboHandles[0];
-    m_indicesVBO = vboHandles[1];
+    m_normalVBO = vboHandles[1];
+    m_indicesVBO = vboHandles[2];
 
     // create vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * m_gridWidth*m_gridHeight, reinterpret_cast<float*>(m_waves.getCurrentWaves()), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 4 * m_gridWidth*m_gridHeight, reinterpret_cast<float*>(m_waves.getCurrentWaves()), GL_STREAM_DRAW);
+
+    // create normal buffer
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 4 * m_gridWidth*m_gridHeight, reinterpret_cast<float*>(m_waves.getCurrentNormals()), GL_STREAM_DRAW);
 
     // create index buffer
     unsigned int* indices = new unsigned int[3 * m_waves.triangleCount()];
@@ -116,9 +121,13 @@ void WaveApp::buildWaveGrid()
     glBindVertexArray(m_vaoHandle);
 
     glEnableVertexAttribArray(0); // vPos;
+    glEnableVertexAttribArray(1); // vNormal;
 
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesVBO);
     glBindVertexArray(0);
@@ -128,14 +137,14 @@ void WaveApp::buildWaveGrid()
 
 void WaveApp::initScene()
 {
-    if(!m_glslProgram->compileShaderFromFile("simple.vert", GLSLShader::VERTEX))
+    if(!m_glslProgram->compileShaderFromFile("render_waves.vert", GLSLShader::VERTEX))
     {
         std::cerr << "Vertex shader failed to compile\n";
         std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
         exit(1);
     }
 
-    if(!m_glslProgram->compileShaderFromFile("simple.frag", GLSLShader::FRAGMENT))
+    if(!m_glslProgram->compileShaderFromFile("render_waves.frag", GLSLShader::FRAGMENT))
     {
         std::cerr << "Fragment shader failed to compile\n";
         std::cerr << "Build Log: " << m_glslProgram->log() << std::endl;
@@ -144,6 +153,7 @@ void WaveApp::initScene()
 
     // bindAttribLocation or bindFragDataLocation here
     m_glslProgram->bindAttribLocation(0, "vPos");
+    m_glslProgram->bindAttribLocation(1, "vNormal");
     m_glslProgram->bindFragDataLocation(0, "FragColor");
 
     if(!m_glslProgram->link())
@@ -160,6 +170,25 @@ void WaveApp::initScene()
     m_modelM = glm::mat4(1.0f);
     m_viewM = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m_projM = glm::perspective(glm::degrees(0.25f * MathUtils::Pi), aspectRatio(), 1.0f, 2048.0f);
+    m_worldInvTransposeM = glm::transpose(glm::inverse(glm::mat3(m_modelM)));
+
+    // light, material and camera
+    m_materialAmbient  = glm::vec4(0.137f, 0.42f, 0.556f, 1.0f);
+    m_materialDiffuse  = glm::vec4(0.137f, 0.42f, 0.556f, 1.0f);
+    m_materialSpecular = glm::vec4(0.8f, 0.8f, 0.8f, 96.0f);
+
+    m_lightDir      = glm::vec3(0.0f, -1.0f, 0.1f);
+    m_lightAmbient  = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+    m_lightDiffuse  = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+    m_lightSpecular = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+
+    m_glslProgram->setUniform("materialAmbient", m_materialAmbient);
+    m_glslProgram->setUniform("materialDiffuse", m_materialDiffuse);
+    m_glslProgram->setUniform("materialSpecular", m_materialSpecular);
+    m_glslProgram->setUniform("lightDir", m_lightDir);
+    m_glslProgram->setUniform("lightAmbient", m_lightAmbient);
+    m_glslProgram->setUniform("lightDiffuse", m_lightDiffuse);
+    m_glslProgram->setUniform("lightSpecular", m_lightSpecular);
 
     buildWaveGrid();
 }
@@ -182,10 +211,6 @@ void WaveApp::render()
     updateScene(m_fpsChronometer.getPassedTimeSinceStart());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 mv = m_viewM * m_modelM;
-    m_glslProgram->setUniform("MVP", m_projM * mv);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(m_vaoHandle);
     glDrawElements(GL_TRIANGLES, 3 * m_waves.triangleCount(), GL_UNSIGNED_INT, ((GLubyte*)NULL + (0)));
 
@@ -205,20 +230,43 @@ void WaveApp::updateScene(double dt)
     glm::vec3 up(0.0f, 1.0f, 0.0f);
     m_viewM = glm::lookAt(pos, target, up);
 
-    int i = 5 + rand() % (m_waves.rowCount()-10);
-    int j = 5 + rand() % (m_waves.columnCount()-10);
+    m_glslProgram->setUniform("eyePosW", pos);
 
-    float r = MathUtils::randF(1.0f, 2.0f);
-    m_waves.disturb(i, j, r);
+    glm::mat4 mv = m_viewM * m_modelM;
+    m_glslProgram->setUniform("MVP", m_projM * mv);
+    m_worldInvTransposeM = glm::transpose(glm::inverse(glm::mat3(m_modelM)));
+    m_glslProgram->setUniform("WorldMatrix", m_modelM);
+    m_glslProgram->setUniform("WorldInvTranspose", m_worldInvTransposeM);
+
+    if(m_waveTrigger.getPassedTimeSinceStart() >= 0.05) // 50ms
+    {
+        int i = 5 + rand() % (m_waves.rowCount()-10);
+        int j = 5 + rand() % (m_waves.columnCount()-10);
+
+        float r = MathUtils::randF(1.0f, 2.0f);
+
+        m_waves.disturb(i, j, r);
+        m_waveTrigger.stop();
+        m_waveTrigger.start();
+    }
 
     m_waves.update(dt);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-    glm::vec3* positionData = reinterpret_cast<glm::vec3*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+    glm::vec4* positionData = reinterpret_cast<glm::vec4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
     
     for(unsigned int i = 0; i < m_waves.vertexCount(); ++i)
     {
         positionData[i] = m_waves[i];
+    }
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalVBO);
+    glm::vec4* normalData = reinterpret_cast<glm::vec4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+
+    for(unsigned int i = 0; i < m_waves.vertexCount(); ++i)
+    {
+        normalData[i] = m_waves.normal(i);
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);
 }
@@ -241,9 +289,22 @@ void WaveApp::onMouseEvent(int button, int state, int x, int y)
 
 void WaveApp::onKeyboardEvent(unsigned char key, int x, int y)
 {
+    static bool state = true;
     if(key == 27)
     {
         exit(0);
+    }
+    else if(key == 'w')
+    {
+        if(state)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        else
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        state = !state;
     }
 }
 

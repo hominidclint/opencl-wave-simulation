@@ -385,7 +385,6 @@ void OpenCLWaveSimulation::render()
     updateScene(m_fpsChronometer.getPassedTimeSinceStart());
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glBindVertexArray(m_vaoWaves);
     glDrawElements(GL_TRIANGLES, 3 * m_waves.triangleCount(), GL_UNSIGNED_INT, ((GLubyte*)NULL + (0)));
@@ -450,7 +449,8 @@ void OpenCLWaveSimulation::computeVertexDisplacement()
     clSetKernelArg(m_vertexDisplacementKernel, 5, sizeof(float), m_waves.k2());
     clSetKernelArg(m_vertexDisplacementKernel, 6, sizeof(float), m_waves.k3());
 
-    if(clEnqueueNDRangeKernel(m_queue, m_vertexDisplacementKernel, 2, NULL, m_global, NULL, 0, 0, 0) != CL_SUCCESS)
+    size_t local[] = {32, 32};
+    if(clEnqueueNDRangeKernel(m_queue, m_vertexDisplacementKernel, 2, NULL, m_global, local, 0, 0, 0) != CL_SUCCESS)
     {
         std::cerr << "Vertex Displacement Kernel Execution failed\n";
     }

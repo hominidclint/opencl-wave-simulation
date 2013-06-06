@@ -45,17 +45,17 @@ public:
     const float* k2() const;
     const float* k3() const;
 
-    inline glm::vec3* getCurrentWaves() const {return m_currSolution;}
-    inline glm::vec3* getCurrentNormals() const {return m_normals;}
+    inline glm::vec4* getCurrentWaves() const {return m_currSolution;}
+    inline glm::vec4* getCurrentNormals() const {return m_normals;}
 
     // returns the solution at the ith grid point
-    inline const glm::vec3& operator[](int i) const {return m_currSolution[i];}
+    inline const glm::vec4& operator[](int i) const {return m_currSolution[i];}
 
     // returns the solution normal at the ith grid point.
-    inline const glm::vec3& normal(int i) const { return m_normals[i]; }
+    inline const glm::vec4& normal(int i) const { return m_normals[i]; }
 
     // returns the unit tangent vector at the ith grid point in the local x-axis direction.
-    inline const glm::vec3& tangentX(int i) const { return m_tangentX[i]; }
+    inline const glm::vec4& tangentX(int i) const { return m_tangentX[i]; }
 
     void init(unsigned int m, unsigned int n, float dx, float dt, float speed, float damping);
     void update(double dt);
@@ -76,10 +76,10 @@ private:
     float m_timeStep;
     float m_spatialStep;
 
-    glm::vec3* m_prevSolution;
-    glm::vec3* m_currSolution;
-    glm::vec3* m_normals;
-    glm::vec3* m_tangentX;
+    glm::vec4* m_prevSolution;
+    glm::vec4* m_currSolution;
+    glm::vec4* m_normals;
+    glm::vec4* m_tangentX;
 };
 
 #endif // CPU_WAVES_H

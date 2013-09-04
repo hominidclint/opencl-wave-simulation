@@ -43,7 +43,9 @@ OpenCLWaveSimulation::OpenCLWaveSimulation(int argc, char** argv, const std::str
       m_radius(600.0f),
       m_prevX(0),
       m_prevY(0),
-      m_pingpong(true)
+      m_pingpong(true),
+	  m_device(0),
+	  m_platform(0)
 {
     m_global[0] = gridWidth;
     m_global[1] = gridHeight;
@@ -194,16 +196,30 @@ void OpenCLWaveSimulation::buildWaveGrid()
 void OpenCLWaveSimulation::initOCL()
 {
     const unsigned int vboSize = m_gridWidth * m_gridHeight * VERTEX_SIZE * sizeof(float);
-    clGetPlatformIDs(1, &m_platform, NULL);
 
-    if(m_argc > 1)
-    {
-        clGetDeviceIDs(m_platform, CL_DEVICE_TYPE_CPU, 1, &m_device, NULL);
-    }
-    else
-    {
-        clGetDeviceIDs(m_platform, CL_DEVICE_TYPE_GPU, 1, &m_device, NULL);
-    }
+	// first get number of available platt forms
+	cl_uint numPlattforms = 0;
+	clGetPlatformIDs(0, NULL, &numPlattforms);
+
+	// then allocate enough memory for all IDs
+	cl_platform_id* plattforms = new cl_platform_id[numPlattforms];
+    clGetPlatformIDs(numPlattforms, plattforms, NULL);
+
+	cl_device_type deviceType = (m_argc <= 1) ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU;
+
+	// now try to find the right plattform for given device type
+	for (unsigned int i = 0; i < numPlattforms; ++i) 
+	{
+		clGetDeviceIDs(plattforms[i], deviceType, 1, &m_device, NULL);
+
+		if (m_device)
+		{
+			m_platform = plattforms[i];
+			break;
+		}
+	}
+	delete plattforms;
+   
 
     // ocl context must be tied to the ogl context
 #   ifdef _WIN32
